@@ -50,12 +50,12 @@ class FlashcardRepository(private val context: Context) {
     private val writeMutex = Mutex()
     private var saveJob: Job? = null
 
+    private val _lastError = MutableStateFlow<String?>(null)
+    val lastError: StateFlow<String?> = _lastError.asStateFlow()
+
     private val _state = MutableStateFlow(load())
     val state: StateFlow<AppState> = _state.asStateFlow()
     val currentState: AppState get() = _state.value
-
-    private val _lastError = MutableStateFlow<String?>(null)
-    val lastError: StateFlow<String?> = _lastError.asStateFlow()
 
     fun clearError() { _lastError.value = null }
 
