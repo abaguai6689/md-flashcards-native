@@ -1,0 +1,2 @@
+-keepattributes *Annotation*
+-keep class com.fest.mdflashcards.data.** { *; }
