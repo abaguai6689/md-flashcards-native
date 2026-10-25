@@ -1,5 +1,8 @@
 # MD 闪记卡 · Native
 
+[![Android CI](https://github.com/abaguai6689/md-flashcards-native/actions/workflows/android.yml/badge.svg)](https://github.com/abaguai6689/md-flashcards-native/actions/workflows/android.yml)
+
+
 把一份很长的 Markdown 笔记拆成一张张闪卡，在 Android 上随机抽背、按章节速记、看复习统计。
 
 本仓库是 [fest77/flash-memory-cards](https://github.com/fest77/flash-memory-cards) 的 **原生 Android 重构版**：
