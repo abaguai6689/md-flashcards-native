@@ -175,6 +175,7 @@ fun QuickScreen(vm: QuickViewModel, onBack: () -> Unit) {
             } else {
                 LazyColumn(
                     state = listState,
+                    modifier = Modifier.weight(1f),
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 28.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {

@@ -104,6 +104,7 @@ fun BrowseScreen(vm: BrowseViewModel, snackbar: SnackbarHostState, onBack: () ->
                 }
             } else {
                 LazyColumn(
+                    modifier = Modifier.weight(1f),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
