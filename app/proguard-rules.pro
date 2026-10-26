@@ -1,2 +1,2 @@
 -keepattributes *Annotation*
--keep class com.fest.mdflashcards.data.** { *; }
+-keep class com.suishibeisong.flashcards.data.** { *; }

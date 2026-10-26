@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "MD-Flashcards"
+rootProject.name = "FlashcardsRecite"
 include(":app")

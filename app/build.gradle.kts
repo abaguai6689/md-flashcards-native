@@ -6,15 +6,15 @@ plugins {
 }
 
 android {
-    namespace = "com.fest.mdflashcards"
+    namespace = "com.suishibeisong.flashcards"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.fest.mdflashcards"
+        applicationId = "com.suishibeisong.flashcards"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.2.1"
+        versionCode = 7
+        versionName = "1.3.0"
         vectorDrawables.useSupportLibrary = true
     }
 

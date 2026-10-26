@@ -1,13 +1,13 @@
-# MD 闪记卡 · MD Flashcards
+# 闪卡背诵 · Flashcards Recite
 
-[![Android CI](https://github.com/abaguai6689/md-flashcards-native/actions/workflows/android.yml/badge.svg)](https://github.com/abaguai6689/md-flashcards-native/actions/workflows/android.yml)
+[![Android CI](https://github.com/abaguai6689/suishibeisong/actions/workflows/android.yml/badge.svg)](https://github.com/abaguai6689/suishibeisong/actions/workflows/android.yml)
 
 一款原创的 Android 本地闪卡应用：把 Markdown 笔记拆成一张张卡片，随机抽背、按章节速记、查看复习统计。
 
 **纯本地 · 无账号 · 无服务器 · 无广告**。数据只保存在手机应用私有目录，备份由你自己导出。
 
-- 仓库：https://github.com/abaguai6689/md-flashcards-native
-- 最新版本：**v1.2.1**
+- 仓库：https://github.com/abaguai6689/suishibeisong
+- 最新版本：**v1.3.0**
 - 详细架构与实现说明：[README-DETAILED.md](README-DETAILED.md)
 
 ## 功能
@@ -77,6 +77,6 @@ app/src/main/java/com/fest/mdflashcards/
 - 公式按 Markdown 文本显示，不渲染 KaTeX；
 - 更新检查使用 GitHub 公共 API，未登录时受速率限制。
 
-## License
+## License / 第三方
 
-MIT，见 [LICENSE](LICENSE)。
+MIT，见 [LICENSE](LICENSE)。界面参考与依赖声明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

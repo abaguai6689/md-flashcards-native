@@ -1,4 +1,4 @@
-# MD 闪记卡 · 框架与实现详解
+# 闪卡背诵 · 框架与实现详解
 
 本文是给维护者看的完整说明：架构、数据模型、拆卡算法、每个页面的实现、图片/备份/更新链路、构建发布与已知取舍。  
 面向使用者的简要说明见 [README.md](README.md)。
@@ -288,7 +288,7 @@ data class AppState(
 
 ## 11. 检查更新与更新日志
 
-- `UpdateChecker` 请求 `https://api.github.com/repos/abaguai6689/md-flashcards-native/releases/latest`；
+- `UpdateChecker` 请求 `https://api.github.com/repos/abaguai6689/suishibeisong/releases/latest`；
 - 解析 `tag_name`，去掉 `v` 前缀；
 - 把版本按数字段比较（`1.1.0 > 1.0.9`）；
 - 结果：`UP_TO_DATE / AVAILABLE / FAILED`；
@@ -370,9 +370,20 @@ data class AppState(
 
 ---
 
-## 16. 签名与覆盖安装
+## 16. 界面参考与许可
+
+- 液态玻璃底栏的视觉与交互参考：
+  - [Kyant0/AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass)（Apache-2.0）
+  - [sdegenaar/liquid_glass_widgets](https://github.com/sdegenaar/liquid_glass_widgets)（MIT）
+- 复习卡片翻面布局参考「知识卡片 1.0」的 4:5 卡片、500ms 弹性翻转、正反面题签/答案结构。
+- 背景模糊使用 [Haze](https://github.com/chrisbanes/haze)（Apache-2.0）。
+- 以上均为设计/交互参考；本项目代码为 Kotlin/Compose 独立实现。
+- 第三方许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
+## 17. 签名与覆盖安装
 
 - 固定签名文件：`keystore/md-flashcards.jks`，alias `mdflashcards`；
+- 包名：`com.suishibeisong.flashcards`；应用名：闪卡背诵；仓库：`abaguai6689/suishibeisong`；
 - debug / release 都使用同一个 `signingConfigs.fixed`，因此后续版本可直接覆盖安装；
 - 可通过环境变量 `MD_KEYSTORE_PASSWORD` / `MD_KEY_ALIAS` / `MD_KEY_PASSWORD` 覆盖默认值；
 - **注意**：该 keystore 随公开仓库分发，只适合个人侧载/内测，不能用于 Google Play 上架；上架请换私有密钥并从 CI Secrets 注入；
