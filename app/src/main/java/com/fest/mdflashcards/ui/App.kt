@@ -45,6 +45,8 @@ import com.fest.mdflashcards.viewmodel.QuickViewModel
 import com.fest.mdflashcards.viewmodel.ReviewViewModel
 import com.fest.mdflashcards.viewmodel.SettingsViewModel
 import com.fest.mdflashcards.viewmodel.StatsViewModel
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.launch
 
 @Composable
@@ -84,11 +86,13 @@ private fun AppContent(repo: FlashcardRepository) {
     NavHost(navController = nav, startDestination = RootRoute) {
         composable<RootRoute> {
             val pager = rememberPagerState(pageCount = { 3 })
+            val hazeState = remember { HazeState() }
             val scope = rememberCoroutineScope()
             Box(Modifier.fillMaxSize()) {
                 HorizontalPager(
                     state = pager,
-                    modifier = Modifier.fillMaxSize(),
+                    beyondViewportPageCount = 2,
+                    modifier = Modifier.fillMaxSize().hazeSource(hazeState),
                 ) { page ->
                     when (page) {
                         0 -> {
@@ -120,6 +124,7 @@ private fun AppContent(repo: FlashcardRepository) {
                     onSelect = { tab ->
                         scope.launch { pager.animateScrollToPage(tab.ordinal) }
                     },
+                    hazeState = hazeState,
                     modifier = Modifier.align(Alignment.BottomCenter),
                 )
             }

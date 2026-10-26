@@ -13,6 +13,17 @@ data class ChangelogEntry(
 object Changelog {
     val entries = listOf(
         ChangelogEntry(
+            version = "1.2.0",
+            date = "2026-10-26",
+            changes = listOf(
+                "底栏改用 Haze 真实背景模糊 + 半透明玻璃，样式对齐 Ghost Downloader 的悬浮胶囊导航",
+                "三页 Pager 预组合相邻页面，减少左右滑动时的掉帧",
+                "导入笔记 FAB 上移，避开底部导航栏",
+                "使用固定签名密钥，之后版本可直接覆盖安装，无需卸载",
+                "说明：由于早期版本使用 CI 临时 debug 签名，从 1.1.x 升级到 1.2.0 仍需卸载一次；1.2.0 之后不再需要",
+            ),
+        ),
+        ChangelogEntry(
             version = "1.1.1",
             date = "2026-10-26",
             changes = listOf(

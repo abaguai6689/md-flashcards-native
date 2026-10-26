@@ -144,6 +144,7 @@ fun HomeScreen(
                 text = { Text(s.importButton) },
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.padding(bottom = 96.dp, end = 4.dp),
             )
         },
         snackbarHost = { SnackbarHost(snackbar) },

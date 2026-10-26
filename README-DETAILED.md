@@ -11,6 +11,7 @@
 |---|---|
 | 语言 | Kotlin 2.0.21 |
 | UI | Jetpack Compose（BOM 2024.12.01）+ Material 3 |
+| 玻璃效果 | Haze 1.2.2（真实背景模糊，低版本回退 tint） |
 | 导航 | Navigation Compose 2.8.5，`@Serializable` 类型安全路由 |
 | 状态 | AndroidX ViewModel 2.8.7 + Kotlin Coroutines 1.9 + StateFlow |
 | 序列化 | kotlinx.serialization JSON |
@@ -248,14 +249,15 @@ data class AppState(
 
 `FloatingNavBar` 不是普通 `NavigationBar`：
 
-- 外层 `shadow(26.dp)` + 圆角 34dp；
-- 半透明白色纵向渐变 + 1dp 渐变高光描边；
-- `drawBehind` 绘制跟随选中项移动的径向高光与顶部高光椭圆；
+- 外层 `shadow(18.dp)` + 圆角 32dp；
+- 使用 **Haze** 的 `hazeSource` / `hazeEffect` 做**真实背景模糊**（Android 12+ RenderEffect；低版本回退 tint），背景色半透明；
+- 1dp 白色渐变描边 + 顶部高光；
 - 每个 Tab 使用 `MutableInteractionSource.collectIsPressedAsState()`，按压缩放至 0.92；
 - 点击有 `TextHandleMove` 触感反馈；
-- 选中项用主色着色与半透明胶囊背景。
+- 选中项用主色着色与半透明胶囊背景；
+- 三页 Pager 设置 `beyondViewportPageCount = 2`，提前组合相邻页面，降低滑动掉帧。
 
-> 这是“液态玻璃质感”的 Compose 仿真：半透明、分层高光、移动折射高光、按压形变。没有使用平台级背景模糊（Compose 无法直接采样父级背景做 blur）。
+> 导航栏样式对齐 Ghost Downloader 的悬浮胶囊玻璃：背景模糊、半透明、细描边、柔和阴影、按压形变，而不是大块渐变或夸张光斑。
 
 ### 9.3 页面职责
 
@@ -313,7 +315,8 @@ data class AppState(
 
 ```bash
 ./gradlew :app:testDebugUnitTest
-./gradlew :app:assembleDebug
+./gradlew :app:assembleRelease
+# app/build/outputs/apk/release/app-release.apk
 ```
 
 单测：
@@ -329,9 +332,9 @@ data class AppState(
 2. `setup-java@v4`（Temurin 17）
 3. `gradle/actions/setup-gradle@v4`
 4. `./gradlew :app:testDebugUnitTest`
-5. `./gradlew :app:assembleDebug`
-6. 上传 artifact `md-flashcards-debug-apk`
-7. tag `v*` 时复制为 `MD-Flashcards-<tag>-debug.apk` 并创建 Release
+5. `./gradlew :app:assembleRelease`
+6. 上传 artifact `md-flashcards-release-apk`
+7. tag `v*` 时复制为 `MD-Flashcards-<tag>-release.apk` 并创建 Release
 
 ### 版本发布流程
 
@@ -364,3 +367,13 @@ data class AppState(
 - 新增页面必须使用类型安全路由，并在 `README` / `README-DETAILED` 补充说明；
 - 发版必须同步 `versionName`、`versionCode`、`Changelog`；
 - 不引入 WebView / 远程配置 / 账号系统，保持纯本地。
+
+---
+
+## 16. 签名与覆盖安装
+
+- 固定签名文件：`keystore/md-flashcards.jks`，alias `mdflashcards`；
+- debug / release 都使用同一个 `signingConfigs.fixed`，因此后续版本可直接覆盖安装；
+- 可通过环境变量 `MD_KEYSTORE_PASSWORD` / `MD_KEY_ALIAS` / `MD_KEY_PASSWORD` 覆盖默认值；
+- **注意**：该 keystore 随公开仓库分发，只适合个人侧载/内测，不能用于 Google Play 上架；上架请换私有密钥并从 CI Secrets 注入；
+- 1.1.x 及更早版本使用 CI 临时 debug 签名，升级到 1.2.0 需要卸载一次；1.2.0 之后不再需要。

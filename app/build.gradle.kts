@@ -13,14 +13,30 @@ android {
         applicationId = "com.fest.mdflashcards"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "1.1.1"
+        versionCode = 5
+        versionName = "1.2.0"
         vectorDrawables.useSupportLibrary = true
     }
 
+    signingConfigs {
+        create("fixed") {
+            // Fixed sideloading key so every release can update the previous install.
+            // NOTE: this key is public in the repository. Do NOT use it for Play Store.
+            // Override via env on CI/private builds if needed.
+            storeFile = rootProject.file("keystore/md-flashcards.jks")
+            storePassword = System.getenv("MD_KEYSTORE_PASSWORD") ?: "mdflashcards2026"
+            keyAlias = System.getenv("MD_KEY_ALIAS") ?: "mdflashcards"
+            keyPassword = System.getenv("MD_KEY_PASSWORD") ?: "mdflashcards2026"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("fixed")
+        }
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("fixed")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -51,6 +67,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     implementation("androidx.documentfile:documentfile:1.0.1")
+    implementation("dev.chrisbanes.haze:haze:1.2.2")
 
     testImplementation("junit:junit:4.13.2")
     debugImplementation("androidx.compose.ui:ui-tooling")

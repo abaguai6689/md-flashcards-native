@@ -33,8 +33,12 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import dev.chrisbanes.haze.HazeInputScale
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeEffect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.graphicsLayer
@@ -55,15 +59,18 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.sp
 import com.fest.mdflashcards.ui.i18n.LocalStrings
 
 enum class MainTab { HOME, STATS, SETTINGS }
 
 @Composable
-fun FloatingNavBar(current: MainTab, onSelect: (MainTab) -> Unit, modifier: Modifier = Modifier) {
+fun FloatingNavBar(
+    current: MainTab,
+    onSelect: (MainTab) -> Unit,
+    hazeState: HazeState,
+    modifier: Modifier = Modifier,
+) {
     val s = LocalStrings.current
     val haptic = LocalHapticFeedback.current
     val tabs = listOf(
@@ -71,16 +78,15 @@ fun FloatingNavBar(current: MainTab, onSelect: (MainTab) -> Unit, modifier: Modi
         Triple(MainTab.STATS, s.tabStats, Icons.Outlined.BarChart),
         Triple(MainTab.SETTINGS, s.tabSettings, Icons.Outlined.Settings),
     )
-    val shape = RoundedCornerShape(34.dp)
+    val shape = RoundedCornerShape(32.dp)
     val light = MaterialTheme.colorScheme.surface.luminance() > 0.5f
-    val topGlass = Color.White.copy(alpha = if (light) 0.66f else 0.14f)
-    val bottomGlass = Color.White.copy(alpha = if (light) 0.26f else 0.045f)
-    val borderStart = Color.White.copy(alpha = if (light) 0.95f else 0.48f)
-    val borderEnd = Color.White.copy(alpha = if (light) 0.24f else 0.06f)
-    val highlight by animateFloatAsState(
-        targetValue = current.ordinal.toFloat(),
-        animationSpec = spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessLow),
-        label = "liquidHighlight",
+    val glassStyle = HazeStyle(
+        backgroundColor = (if (light) Color.White else Color.Black).copy(alpha = if (light) 0.38f else 0.26f),
+        tints = listOf(
+            HazeTint(Color.White.copy(alpha = if (light) 0.22f else 0.10f)),
+        ),
+        blurRadius = 20.dp,
+        noiseFactor = 0.015f,
     )
 
     Box(
@@ -93,64 +99,33 @@ fun FloatingNavBar(current: MainTab, onSelect: (MainTab) -> Unit, modifier: Modi
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(70.dp)
+                .height(66.dp)
                 .shadow(
-                    elevation = 26.dp,
+                    elevation = 18.dp,
                     shape = shape,
                     clip = false,
-                    ambientColor = Color.Black.copy(alpha = 0.22f),
-                    spotColor = Color.Black.copy(alpha = 0.3f),
+                    ambientColor = Color.Black.copy(alpha = 0.18f),
+                    spotColor = Color.Black.copy(alpha = 0.24f),
                 )
+                .hazeEffect(state = hazeState, style = glassStyle) {
+                    // Blur at half resolution: visually identical for a nav bar, much cheaper per frame.
+                    inputScale = HazeInputScale.Fixed(0.55f)
+                }
                 .clip(shape)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(topGlass, bottomGlass),
-                    ),
-                )
                 .border(
                     width = 1.dp,
                     brush = Brush.linearGradient(
-                        colors = listOf(borderStart, borderEnd, borderStart.copy(alpha = 0.35f)),
+                        colors = listOf(
+                            Color.White.copy(alpha = if (light) 0.90f else 0.42f),
+                            Color.White.copy(alpha = if (light) 0.22f else 0.05f),
+                            Color.White.copy(alpha = if (light) 0.55f else 0.18f),
+                        ),
                     ),
                     shape = shape,
-                )
-                .drawBehind {
-                    val cell = size.width / 3f
-                    val centerX = (highlight + 0.5f) * cell
-                    val radius = cell * 0.9f
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = if (light) 0.55f else 0.20f),
-                                Color.White.copy(alpha = 0.0f),
-                            ),
-                            center = Offset(centerX, size.height * 0.12f),
-                            radius = radius,
-                        ),
-                        radius = radius,
-                        center = Offset(centerX, size.height * 0.12f),
-                    )
-                    drawOval(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = 0.0f),
-                                Color.White.copy(alpha = if (light) 0.45f else 0.16f),
-                                Color.White.copy(alpha = 0.0f),
-                            ),
-                        ),
-                        topLeft = Offset(centerX - cell * 0.55f, -size.height * 0.35f),
-                        size = androidx.compose.ui.geometry.Size(cell * 1.1f, size.height * 0.9f),
-                    )
-                    drawLine(
-                        color = Color.White.copy(alpha = if (light) 0.65f else 0.18f),
-                        start = Offset(18.dp.toPx(), 1.dp.toPx()),
-                        end = Offset(size.width - 18.dp.toPx(), 1.dp.toPx()),
-                        strokeWidth = 1.dp.toPx(),
-                    )
-                },
+                ),
         ) {
             Row(
-                Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 8.dp),
+                Modifier.fillMaxSize().padding(horizontal = 9.dp, vertical = 7.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -165,7 +140,7 @@ fun FloatingNavBar(current: MainTab, onSelect: (MainTab) -> Unit, modifier: Modi
                     )
                     val bg by animateColorAsState(
                         targetValue = if (selected) {
-                            MaterialTheme.colorScheme.primary.copy(alpha = if (light) 0.16f else 0.28f)
+                            MaterialTheme.colorScheme.primary.copy(alpha = if (light) 0.14f else 0.24f)
                         } else Color.Transparent,
                         label = "navBg",
                     )

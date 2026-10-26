@@ -7,7 +7,7 @@
 **纯本地 · 无账号 · 无服务器 · 无广告**。数据只保存在手机应用私有目录，备份由你自己导出。
 
 - 仓库：https://github.com/abaguai6689/md-flashcards-native
-- 最新版本：**v1.1.1**
+- 最新版本：**v1.2.0**
 - 详细架构与实现说明：[README-DETAILED.md](README-DETAILED.md)
 
 ## 功能
@@ -51,11 +51,11 @@
 
 ```bash
 ./gradlew :app:testDebugUnitTest
-./gradlew :app:assembleDebug
-# app/build/outputs/apk/debug/app-debug.apk
+./gradlew :app:assembleRelease
+# app/build/outputs/apk/release/app-release.apk（固定签名，可直接覆盖安装）
 ```
 
-GitHub Actions 在 push / PR / 手动触发 / `v*` tag 时自动运行单测、构建 APK；tag 会创建 Release 并附带 APK。
+GitHub Actions 在 push / PR / 手动触发 / `v*` tag 时自动运行单测、构建 **release** APK；tag 会创建 Release 并附带 APK。
 
 ## 项目结构
 
