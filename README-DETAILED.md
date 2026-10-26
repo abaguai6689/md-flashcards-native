@@ -334,7 +334,7 @@ data class AppState(
 4. `./gradlew :app:testDebugUnitTest`
 5. `./gradlew :app:assembleRelease`
 6. 上传 artifact `md-flashcards-release-apk`
-7. tag `v*` 时复制为 `MD-Flashcards-<tag>-release.apk` 并创建 Release
+7. tag `v*` 时复制为 `FlashcardsRecite-<tag>-release.apk` 并创建 Release
 
 ### 版本发布流程
 
