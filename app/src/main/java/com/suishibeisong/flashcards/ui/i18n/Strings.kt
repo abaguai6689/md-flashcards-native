@@ -58,19 +58,22 @@ data class Strings(
     val sampleFailed: String = "保存示例失败", val chooseImages: String = "选择图片（可选）",
     val imagesSelected: String = "%d 张图片", val imageHint: String = "图片按文件名匹配，只保存在本机",
     val flipHint: String = "点击卡片翻面", val swipeHint2: String = "背面左滑忘了 · 右滑记住",
+    val statusFilter: String = "状态", val stateAll: String = "全部状态",
+    val stateKnown: String = "已掌握", val stateNew: String = "尚未背诵",
+    val stateMarked: String = "已标记", val editDeck: String = "编辑笔记",
 )
 
 val ZhHans = Strings(
     code = "zh", appName = "闪卡背诵", tabHome = "首页", tabStats = "统计", tabSettings = "设置",
     homeTitle = "闪记卡", homeSubtitle = "长笔记 → 卡片 → 随机抽背",
-    statDue = "待复习", statKnown = "已掌握", statToday = "今日复习",
-    resumeTitle = "继续上次复习", resumeLeft = "还剩 %d 张", searchDecks = "搜索笔记",
-    sortRecent = "最近", sortName = "名称", sortCards = "卡片数", sortDue = "待复习",
+    statDue = "待学习", statKnown = "已掌握", statToday = "今日学习",
+    resumeTitle = "继续上次学习", resumeLeft = "还剩 %d 张", searchDecks = "搜索笔记",
+    sortRecent = "最近", sortName = "名称", sortCards = "卡片数", sortDue = "待学习",
     emptyTitle = "还没有笔记", emptyBody = "导入一份 Markdown 笔记，自动拆成一张张闪卡", importButton = "导入笔记",
-    deckCards = "%d 张卡", deckKnown = "已掌握 %d", deckDue = "待复习 %d",
-    deckReview = "随机复习", deckQuick = "分类速记", deckBrowse = "浏览 / 编辑",
+    deckCards = "%d 张卡", deckKnown = "已掌握 %d", deckDue = "待学习 %d",
+    deckReview = "随机学习", deckQuick = "分类速记", deckBrowse = "浏览 / 编辑",
     deckRename = "重命名", deckReset = "重置进度", deckDelete = "删除笔记",
-    renameHint = "笔记名称", deleteDeckConfirm = "删除「%s」及它的复习进度？", resetDeckConfirm = "清空「%s」的全部复习进度？",
+    renameHint = "笔记名称", deleteDeckConfirm = "删除「%s」及它的学习进度？", resetDeckConfirm = "清空「%s」的全部学习进度？",
     more = "更多", cancel = "取消", confirm = "确定", delete = "删除", save = "保存",
     close = "关闭", back = "返回", done = "完成", all = "全部", error = "出错了",
     importTitle = "导入笔记", importFile = "选择 .md / .txt / .zip", importPaste = "粘贴 Markdown",
@@ -80,19 +83,19 @@ val ZhHans = Strings(
     granFine = "细", granMid = "中", granCoarse = "粗",
     importStart = "开始导入", importEmpty = "请选择文件或粘贴内容",
     importReplaceTitle = "同名笔记已存在", importReplaceMsg = "是否覆盖「%s」？", importSkip = "跳过", imported = "导入完成",
-    reviewSetup = "复习设置", count = "数量", count20 = "20 张", count50 = "50 张", countAll = "全部",
-    weakOnly = "只看薄弱卡", chapter = "章节", startReview = "开始复习",
+    reviewSetup = "学习设置", count = "数量", count20 = "20 张", count50 = "50 张", countAll = "全部",
+    weakOnly = "只看薄弱卡", chapter = "章节", startReview = "开始学习",
     reviewProgress = "本轮 %1\$d / %2\$d", showAnswer = "显示答案", tapReveal = "先回忆，再点卡片看答案",
     rateForgot = "忘了", rateFuzzy = "模糊", rateGot = "记住了", undo = "撤销上一张",
     round2 = "第 2 轮", reviewDone = "本轮完成", reviewSummary = "记住 %1\$d · 模糊 %2\$d · 忘了 %3\$d",
-    reviewAgain = "再来一轮", reviewBack = "返回列表", reviewEmpty = "没有可复习的卡片",
+    reviewAgain = "再来一轮", reviewBack = "返回列表", reviewEmpty = "没有可学习的卡片",
     reviewSessionLost = "上次会话已失效", swipeHint = "左滑忘了 · 右滑记住",
     quickTitle = "分类速记", quickSearch = "搜索题目或答案", quickAll = "全部 %d", quickCount = "%d 张",
     toc = "题目目录", expandAll = "展开全部", collapseAll = "收起全部", quickEmpty = "没有匹配的卡片", uncategorized = "未分类",
     browseTitle = "浏览 / 编辑", browseSearch = "搜索卡片", cardEdit = "编辑卡片",
     cardTitleLabel = "标题", cardQuestionLabel = "题面", cardAnswerLabel = "答案",
     cardDelete = "删除卡片", cardReset = "重置该卡进度", cardSaved = "已保存", answerRequired = "答案不能为空",
-    statsTitle = "统计", statsToday = "今日复习", statsTotal = "累计复习", statsStreak = "连续天数",
+    statsTitle = "统计", statsToday = "今日学习", statsTotal = "累计学习", statsStreak = "连续天数",
     statsHeat = "热力图", statsBars = "条形图", reviewsUnit = "次",
     settingsTitle = "设置", settingsGeneral = "通用", settingsTheme = "主题",
     themeSystem = "跟随系统", themeLight = "浅色", themeDark = "深色",
@@ -101,11 +104,11 @@ val ZhHans = Strings(
     lineHeight = "行距", tight = "紧凑", normal = "标准", loose = "宽松",
     cardWidth = "内容宽度", narrow = "窄", medium = "中", wide = "宽",
     settingsData = "数据", exportBackup = "导出备份", importBackup = "导入备份",
-    merge = "合并", replace = "替换", clearAll = "清空全部数据", clearConfirm = "将删除全部笔记和复习进度，此操作不可撤销。确定吗？",
+    merge = "合并", replace = "替换", clearAll = "清空全部数据", clearConfirm = "将删除全部笔记和学习进度，此操作不可撤销。确定吗？",
     about = "关于", version = "版本", source = "开源仓库",
     designNote = "使用 Ghost-Downloader-Android 的 Compose + MVVM 前端架构重构",
     backupInvalid = "备份格式不正确", exportDone = "备份已导出", importDone = "备份已导入",
-    readFail = "读取文件失败", backupInfo = "备份包含笔记、卡片与复习进度；不含任何密钥",
+    readFail = "读取文件失败", backupInfo = "备份包含笔记、卡片与学习进度；不含任何密钥",
 )
 
 val ZhHant = ZhHans.copy(
@@ -164,6 +167,8 @@ val ZhHant = ZhHans.copy(
     sampleFailed = "儲存範例失敗", chooseImages = "選擇圖片（選填）",
     imagesSelected = "%d 張圖片", imageHint = "圖片依檔名配對，只保存在本機",
     flipHint = "點擊卡片翻面", swipeHint2 = "背面左滑忘了 · 右滑記住",
+    statusFilter = "狀態", stateAll = "全部狀態", stateKnown = "已掌握",
+    stateNew = "尚未背誦", stateMarked = "已標記", editDeck = "編輯筆記",
 )
 
 val En = ZhHans.copy(
@@ -221,6 +226,8 @@ val En = ZhHans.copy(
     sampleFailed = "Could not save sample", chooseImages = "Choose images (optional)",
     imagesSelected = "%d images", imageHint = "Images match by file name and stay on this device",
     flipHint = "Tap the card to flip", swipeHint2 = "Swipe left to forget · right to remember",
+    statusFilter = "Status", stateAll = "All statuses", stateKnown = "Mastered",
+    stateNew = "Not studied", stateMarked = "Marked", editDeck = "Edit note",
 )
 
 val LocalStrings = compositionLocalOf { ZhHans }

@@ -32,8 +32,8 @@ class DeckViewModel(private val repo: FlashcardRepository, private val deckId: S
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DeckUiState())
 
-    fun startReview(count: Int, weakOnly: Boolean, chapter: String): Boolean =
-        repo.startReview(deckId, count, weakOnly, chapter)
+    fun startReview(count: Int, weakOnly: Boolean, chapter: String, statusFilter: String = "all"): Boolean =
+        repo.startReview(deckId, count, weakOnly, chapter, statusFilter)
 
     fun rename(name: String) = repo.renameDeck(deckId, name)
     fun reset() = repo.resetDeckProgress(deckId)

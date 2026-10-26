@@ -117,8 +117,8 @@ app/src/main/java/com/fest/mdflashcards/
 data class AppState(
     val version: Int = 1,
     val decks: List<Deck>,
-    val stats: Map<String, CardStat>,       // cardId -> 复习状态
-    val daily: Map<String, Int>,            // yyyy-MM-dd -> 当天复习次数
+    val stats: Map<String, CardStat>,       // cardId -> 学习状态
+    val daily: Map<String, Int>,            // yyyy-MM-dd -> 当天学习次数
     val reviewSession: ReviewSession?,      // 未完成会话
     val lastBackupAt: Long,
     val lastChangeAt: Long,
@@ -202,7 +202,7 @@ data class AppState(
 
 ---
 
-## 8. 复习调度与交互
+## 8. 学习调度与交互
 
 ### 8.1 Leitner 三盒
 
@@ -224,7 +224,17 @@ data class AppState(
 - 点击正面 → `vm.reveal()`；点击背面 → `vm.hideAnswer()`；
 - 两面内容分别可垂直滚动，提示文字固定在底部。
 
-### 8.3 左右滑动评价
+### 8.3 状态分组
+
+- 笔记详情页的「状态」筛选只作用于当前 `deckId` 的卡片：
+  - 全部状态：不过滤；
+  - 已掌握：`CardStat.status == "known"`；
+  - 尚未背诵：无 `CardStat` 或 `reviews == 0`；
+  - 已标记：`reviews > 0` 且尚未掌握（即点过“模糊/忘了”）。
+- “记住”会写入 `known`，因此自动移出“已标记”；再次“模糊/忘了”会回到“已标记”。
+- 该状态筛选与章节、薄弱卡、数量可以叠加使用，开始学习时只把这些卡片放入队列。
+
+### 8.4 左右滑动评价
 
 - 仅在答案面启用 `detectHorizontalDragGestures`；
 - 拖动时 `translationX` 跟随，`rotationZ` 随位移倾斜，透明度随距离下降，边框变绿/红；
@@ -252,6 +262,7 @@ data class AppState(
 - 外层 `shadow(18.dp)` + 圆角 32dp；
 - 使用 **Haze** 的 `hazeSource` / `hazeEffect` 做**真实背景模糊**（Android 12+ RenderEffect；低版本回退 tint），背景色半透明；
 - 1dp 白色渐变描边 + 顶部高光；
+- 选中指示块随手指水平拖动，松手吸附到最近 Tab；
 - 每个 Tab 使用 `MutableInteractionSource.collectIsPressedAsState()`，按压缩放至 0.92；
 - 点击有 `TextHandleMove` 触感反馈；
 - 选中项用主色着色与半透明胶囊背景；
@@ -263,8 +274,8 @@ data class AppState(
 
 | 页面 | 关键内容 |
 |---|---|
-| Home | 统计条、继续复习、搜索/排序、笔记卡片、FAB、导入 Sheet（md/zip/图片/粘贴/示例/拆卡选项） |
-| Deck | 笔记信息、三项快捷入口、复习设置（数量/薄弱/章节）、重命名/重置/删除 |
+| Home | 统计条、继续学习、搜索/排序、笔记卡片、FAB、导入 Sheet（md/zip/图片/粘贴/示例/拆卡选项）；长按笔记或三点菜单可打开编辑框 |
+| Deck | 笔记信息、三项快捷入口、学习设置（数量/薄弱/章节/状态）、重命名/重置/删除 |
 | Review | 3D 翻面卡片、滑动评分、三档按钮、撤销、第 2 轮、完成摘要 |
 | Quick | 章节 Chip、题目目录 Sheet、折叠分组、搜索、跳转高亮 |
 | Browse | 搜索、卡片列表、编辑对话框、删卡、重置单卡 |
@@ -375,7 +386,7 @@ data class AppState(
 - 液态玻璃底栏的视觉与交互参考：
   - [Kyant0/AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass)（Apache-2.0）
   - [sdegenaar/liquid_glass_widgets](https://github.com/sdegenaar/liquid_glass_widgets)（MIT）
-- 复习卡片翻面布局参考「知识卡片 1.0」的 4:5 卡片、500ms 弹性翻转、正反面题签/答案结构。
+- 学习卡片翻面布局参考「知识卡片 1.0」的 4:5 卡片、500ms 弹性翻转、正反面题签/答案结构。
 - 背景模糊使用 [Haze](https://github.com/chrisbanes/haze)（Apache-2.0）。
 - 以上均为设计/交互参考；本项目代码为 Kotlin/Compose 独立实现。
 - 第三方许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

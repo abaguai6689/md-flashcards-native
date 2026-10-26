@@ -2,12 +2,12 @@
 
 [![Android CI](https://github.com/abaguai6689/suishibeisong/actions/workflows/android.yml/badge.svg)](https://github.com/abaguai6689/suishibeisong/actions/workflows/android.yml)
 
-一款原创的 Android 本地闪卡应用：把 Markdown 笔记拆成一张张卡片，随机抽背、按章节速记、查看复习统计。
+一款原创的 Android 本地闪卡应用：把 Markdown 笔记拆成一张张卡片，随机抽背、按章节速记、查看学习统计。
 
 **纯本地 · 无账号 · 无服务器 · 无广告**。数据只保存在手机应用私有目录，备份由你自己导出。
 
 - 仓库：https://github.com/abaguai6689/suishibeisong
-- 最新版本：**v1.3.0**
+- 最新版本：**v1.4.0**
 - 详细架构与实现说明：[README-DETAILED.md](README-DETAILED.md)
 
 ## 功能
@@ -23,10 +23,10 @@
 - **导入图片**：选择图片后按文件名匹配 Markdown 引用，图片复制到应用私有目录，卡片内直接渲染；图片不参与 JSON 备份。
 - **保存示例**：导入页可一键把示例 Markdown 写入系统 `Download` 目录，方便用 AI 改写后重新导入。
 
-### 复习
+### 学习
 
 - Leitner 三盒：记住 1 / 3 / 7 天，模糊明天，忘记立即到期。
-- 复习数量 20 / 50 / 全部；只看薄弱卡；按章节筛选。
+- 学习数量 20 / 50 / 全部；只看薄弱卡；按章节筛选。
 - 卡片正面题目，**点击 3D 翻面**到背面答案。
 - 背面**左滑忘了 / 右滑记住**，带位移、旋转、淡出动画；也保留三档评分按钮。
 - 撤销上一张；首轮模糊/忘记卡自动进入第 2 轮；退出后可继续上次会话。

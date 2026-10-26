@@ -15,6 +15,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,6 +62,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -249,6 +251,7 @@ private fun FlipSwipeCard(
                 rotationZ = if (width > 0f) (offset.value / width) * 9f else 0f
                 alpha = 1f - (abs(offset.value) / (width.coerceAtLeast(1f) * 2.2f)).coerceIn(0f, 0.55f)
             }
+            .clip(RoundedCornerShape(28.dp))
             .border(2.dp, swipeColor.copy(alpha = 0.75f), RoundedCornerShape(28.dp))
             .pointerInput(revealed, card.id) {
                 if (!revealed) return@pointerInput
@@ -279,6 +282,8 @@ private fun FlipSwipeCard(
                 )
             }
             .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
                 onClick = { if (revealed) onHide() else onReveal() },
             ),
     ) {

@@ -95,8 +95,8 @@ class HomeViewModel(private val repo: FlashcardRepository) : ViewModel() {
     fun deleteDeck(deckId: String) = repo.deleteDeck(deckId)
     fun resetDeck(deckId: String) = repo.resetDeckProgress(deckId)
 
-    fun startReview(deckId: String, count: Int, weakOnly: Boolean, chapter: String): Boolean =
-        repo.startReview(deckId, count, weakOnly, chapter)
+    fun startReview(deckId: String, count: Int, weakOnly: Boolean, chapter: String, statusFilter: String = "all"): Boolean =
+        repo.startReview(deckId, count, weakOnly, chapter, statusFilter)
 
     suspend fun importUri(uri: Uri, options: ParseOptions, imageRenames: Map<String, String> = emptyMap()): ImportSummary =
         repo.importUri(uri, options, imageRenames = imageRenames)

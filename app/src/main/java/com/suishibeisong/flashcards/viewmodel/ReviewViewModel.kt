@@ -233,8 +233,8 @@ class ReviewViewModel(private val repo: FlashcardRepository) : ViewModel() {
         )
     }
 
-    fun restart(deckId: String, count: Int, weakOnly: Boolean, chapter: String) {
-        if (repo.startReview(deckId, count, weakOnly, chapter)) {
+    fun restart(deckId: String, count: Int, weakOnly: Boolean, chapter: String, statusFilter: String = "all") {
+        if (repo.startReview(deckId, count, weakOnly, chapter, statusFilter)) {
             resetFromSession()
         } else {
             _ui.value = ReviewUiState(empty = true)

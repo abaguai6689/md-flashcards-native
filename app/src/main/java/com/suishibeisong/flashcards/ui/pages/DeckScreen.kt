@@ -88,6 +88,8 @@ fun DeckScreen(
     var weak by remember { mutableStateOf(false) }
     var chapter by remember { mutableStateOf("") }
     var chapterMenu by remember { mutableStateOf(false) }
+    var statusFilter by remember { mutableStateOf("all") }
+    var statusMenu by remember { mutableStateOf(false) }
 
     val deck = ui.deck
     Scaffold(
@@ -208,10 +210,34 @@ fun DeckScreen(
                 }
             }
 
+            Spacer(Modifier.height(10.dp))
+            Box {
+                OutlinedButton(onClick = { statusMenu = true }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) {
+                    val label = when (statusFilter) {
+                        "known" -> s.stateKnown
+                        "new" -> s.stateNew
+                        "marked" -> s.stateMarked
+                        else -> s.stateAll
+                    }
+                    Text("${s.statusFilter}: $label", modifier = Modifier.weight(1f))
+                    Text("▾")
+                }
+                DropdownMenu(expanded = statusMenu, onDismissRequest = { statusMenu = false }) {
+                    listOf(
+                        "all" to s.stateAll,
+                        "known" to s.stateKnown,
+                        "new" to s.stateNew,
+                        "marked" to s.stateMarked,
+                    ).forEach { (key, label) ->
+                        DropdownMenuItem(text = { Text(label) }, onClick = { statusFilter = key; statusMenu = false })
+                    }
+                }
+            }
+
             Spacer(Modifier.height(18.dp))
             Button(
                 onClick = {
-                    if (vm.startReview(count, weak, chapter)) onStartReview()
+                    if (vm.startReview(count, weak, chapter, statusFilter)) onStartReview()
                     else scope.launch { snackbar.showSnackbar(s.reviewEmpty) }
                 },
                 modifier = Modifier.fillMaxWidth().height(52.dp),

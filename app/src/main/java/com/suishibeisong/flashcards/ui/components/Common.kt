@@ -145,10 +145,14 @@ fun FloatingNavBar(
                     ambientColor = Color.Black.copy(alpha = 0.18f),
                     spotColor = Color.Black.copy(alpha = 0.24f),
                 )
+                .clip(shape)
+                .graphicsLayer {
+                    this.shape = shape
+                    clip = true
+                }
                 .hazeEffect(state = hazeState, style = glassStyle) {
                     inputScale = HazeInputScale.Fixed(0.55f)
                 }
-                .clip(shape)
                 .border(
                     width = 1.dp,
                     brush = Brush.linearGradient(

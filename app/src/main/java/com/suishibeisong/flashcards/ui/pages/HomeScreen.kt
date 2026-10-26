@@ -10,6 +10,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -120,6 +123,7 @@ fun HomeScreen(
     var renameText by remember { mutableStateOf("") }
     var deleteDeck by remember { mutableStateOf<Deck?>(null) }
     var resetDeck by remember { mutableStateOf<Deck?>(null) }
+    var editingDeck by remember { mutableStateOf<Deck?>(null) }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -255,6 +259,7 @@ fun HomeScreen(
                         },
                         onQuick = { onQuick(item.deck.id) },
                         onBrowse = { onBrowse(item.deck.id) },
+                        onEdit = { editingDeck = item.deck },
                         onRename = { renameDeck = item.deck; renameText = item.deck.name },
                         onReset = { resetDeck = item.deck },
                         onDelete = { deleteDeck = item.deck },
@@ -274,6 +279,16 @@ fun HomeScreen(
                 snackbar.currentSnackbarData?.dismiss()
                 scope.launch { snackbar.showSnackbar(summary.messages.firstOrNull() ?: s.imported) }
             },
+        )
+    }
+
+    editingDeck?.let { deck ->
+        DeckEditDialog(
+            deck = deck,
+            onDismiss = { editingDeck = null },
+            onSave = { name -> vm.renameDeck(deck.id, name); editingDeck = null },
+            onReset = { editingDeck = null; resetDeck = deck },
+            onDelete = { editingDeck = null; deleteDeck = deck },
         )
     }
 
@@ -321,12 +336,48 @@ fun HomeScreen(
 }
 
 @Composable
+private fun DeckEditDialog(
+    deck: Deck,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit,
+    onReset: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    val s = LocalStrings.current
+    var name by remember(deck.id) { mutableStateOf(deck.name) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(s.editDeck) },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    placeholder = { Text(s.renameHint) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(8.dp))
+                Row {
+                    TextButton(onClick = onReset) { Text(s.deckReset) }
+                    TextButton(onClick = onDelete) { Text(s.deckDelete, color = MaterialTheme.colorScheme.error) }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = { onSave(name) }) { Text(s.save) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(s.cancel) } },
+    )
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
 private fun DeckCard(
     item: DeckItem,
     onClick: () -> Unit,
     onReview: () -> Unit,
     onQuick: () -> Unit,
     onBrowse: () -> Unit,
+    onEdit: () -> Unit,
     onRename: () -> Unit,
     onReset: () -> Unit,
     onDelete: () -> Unit,
@@ -337,7 +388,15 @@ private fun DeckCard(
     Surface(
         shape = RoundedCornerShape(24.dp),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .combinedClickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick,
+                onLongClick = onEdit,
+            ),
     ) {
         Column(Modifier.padding(18.dp)) {
             Row(verticalAlignment = Alignment.Top) {
@@ -365,6 +424,7 @@ private fun DeckCard(
                         Icon(Icons.Outlined.MoreVert, contentDescription = s.more)
                     }
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                        DropdownMenuItem(text = { Text(s.editDeck) }, onClick = { menu = false; onEdit() })
                         DropdownMenuItem(text = { Text(s.deckReview) }, onClick = { menu = false; onReview() })
                         DropdownMenuItem(text = { Text(s.deckQuick) }, onClick = { menu = false; onQuick() })
                         DropdownMenuItem(text = { Text(s.deckBrowse) }, onClick = { menu = false; onBrowse() })

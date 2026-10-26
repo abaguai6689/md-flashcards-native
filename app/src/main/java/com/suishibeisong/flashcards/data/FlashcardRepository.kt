@@ -417,11 +417,25 @@ class FlashcardRepository(private val context: Context) {
 
     /* ---------------------------- review session ---------------------------- */
 
-    fun startReview(deckId: String, count: Int, weakOnly: Boolean, chapter: String): Boolean {
+    fun startReview(
+        deckId: String,
+        count: Int,
+        weakOnly: Boolean,
+        chapter: String,
+        statusFilter: String = "all",
+    ): Boolean {
         val s = _state.value
         val deck = s.decks.find { it.id == deckId } ?: return false
         var items = deck.cards.filter { c ->
-            (!weakOnly || ProgressRules.isWeak(s.stats[c.id])) &&
+            val stat = s.stats[c.id]
+            val statusMatches = when (statusFilter) {
+                "known" -> ProgressRules.isKnown(stat)
+                "new" -> stat == null || stat.reviews == 0
+                "marked" -> stat != null && stat.reviews > 0 && !ProgressRules.isKnown(stat)
+                else -> true
+            }
+            statusMatches &&
+                (!weakOnly || ProgressRules.isWeak(stat)) &&
                 (chapter.isEmpty() || ProgressRules.chapterOf(c) == chapter)
         }
         if (items.isEmpty()) return false
