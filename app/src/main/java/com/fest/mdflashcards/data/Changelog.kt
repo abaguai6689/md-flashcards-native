@@ -13,6 +13,13 @@ data class ChangelogEntry(
 object Changelog {
     val entries = listOf(
         ChangelogEntry(
+            version = "1.1.1",
+            date = "2026-10-26",
+            changes = listOf(
+                "Android 9 及以下保存示例时申请存储权限，确保写入公共 Download 目录",
+            ),
+        ),
+        ChangelogEntry(
             version = "1.1.0",
             date = "2026-10-26",
             changes = listOf(

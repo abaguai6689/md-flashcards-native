@@ -1,9 +1,13 @@
 package com.fest.mdflashcards.ui.pages
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -413,6 +417,29 @@ private fun ImportSheet(
         }
     }
 
+    fun saveSampleNow() {
+        val path = SampleMarkdown.save(context)
+        Toast.makeText(
+            context,
+            if (path != null) s.sampleSaved.fmt(path) else s.sampleFailed,
+            Toast.LENGTH_LONG,
+        ).show()
+    }
+
+    val storagePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) saveSampleNow() else Toast.makeText(context, s.sampleFailed, Toast.LENGTH_LONG).show()
+    }
+
+    fun onSaveSample() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+        ) {
+            storagePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        } else {
+            saveSampleNow()
+        }
+    }
+
     fun parseOptions() = ParseOptions(
         mode = mode,
         qstyle = qstyle,
@@ -481,14 +508,7 @@ private fun ImportSheet(
                     )
                 }
                 Spacer(Modifier.height(8.dp))
-                TextButton(onClick = {
-                    val path = SampleMarkdown.save(context)
-                    Toast.makeText(
-                        context,
-                        if (path != null) s.sampleSaved.fmt(path) else s.sampleFailed,
-                        Toast.LENGTH_LONG,
-                    ).show()
-                }) { Text(s.saveSample, fontSize = 12.sp) }
+                TextButton(onClick = { onSaveSample() }) { Text(s.saveSample, fontSize = 12.sp) }
             } else {
                 OutlinedTextField(
                     value = paste,

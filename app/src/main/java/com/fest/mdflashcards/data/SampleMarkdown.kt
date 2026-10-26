@@ -2,9 +2,12 @@ package com.fest.mdflashcards.data
 
 import android.content.ContentValues
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import android.media.MediaScannerConnection
+import androidx.core.content.ContextCompat
 import java.io.File
 
 object SampleMarkdown {
@@ -66,11 +69,18 @@ object SampleMarkdown {
             resolver.update(uri, values, null, null)
             "Download/$FILE_NAME"
         } else {
-            val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: context.filesDir
+            val granted = ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!granted) return null
+            @Suppress("DEPRECATION")
+            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             dir.mkdirs()
             val file = File(dir, FILE_NAME)
             file.writeText(content, Charsets.UTF_8)
-            file.absolutePath
+            MediaScannerConnection.scanFile(context, arrayOf(file.absolutePath), arrayOf("text/markdown"), null)
+            "Download/$FILE_NAME"
         }
     }.getOrNull()
 }
