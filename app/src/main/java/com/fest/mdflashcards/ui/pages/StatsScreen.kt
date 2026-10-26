@@ -63,7 +63,7 @@ fun StatsScreen(vm: StatsViewModel) {
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 18.dp)
-                .padding(bottom = 96.dp),
+                .padding(bottom = 112.dp),
         ) {
             Spacer(Modifier.height(4.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(9.dp), modifier = Modifier.fillMaxWidth()) {

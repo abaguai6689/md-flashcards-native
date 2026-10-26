@@ -1,7 +1,13 @@
 package com.fest.mdflashcards.ui.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -11,6 +17,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -26,9 +33,19 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.unit.Dp
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +55,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.sp
 import com.fest.mdflashcards.ui.i18n.LocalStrings
 
@@ -46,57 +65,138 @@ enum class MainTab { HOME, STATS, SETTINGS }
 @Composable
 fun FloatingNavBar(current: MainTab, onSelect: (MainTab) -> Unit, modifier: Modifier = Modifier) {
     val s = LocalStrings.current
+    val haptic = LocalHapticFeedback.current
     val tabs = listOf(
         Triple(MainTab.HOME, s.tabHome, Icons.Outlined.Home),
         Triple(MainTab.STATS, s.tabStats, Icons.Outlined.BarChart),
         Triple(MainTab.SETTINGS, s.tabSettings, Icons.Outlined.Settings),
     )
+    val shape = RoundedCornerShape(34.dp)
+    val light = MaterialTheme.colorScheme.surface.luminance() > 0.5f
+    val topGlass = Color.White.copy(alpha = if (light) 0.66f else 0.14f)
+    val bottomGlass = Color.White.copy(alpha = if (light) 0.26f else 0.045f)
+    val borderStart = Color.White.copy(alpha = if (light) 0.95f else 0.48f)
+    val borderEnd = Color.White.copy(alpha = if (light) 0.24f else 0.06f)
+    val highlight by animateFloatAsState(
+        targetValue = current.ordinal.toFloat(),
+        animationSpec = spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessLow),
+        label = "liquidHighlight",
+    )
+
     Box(
         modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(horizontal = 28.dp, vertical = 10.dp),
+            .padding(horizontal = 24.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Surface(
-            shape = RoundedCornerShape(30.dp),
-            color = MaterialTheme.colorScheme.surfaceContainer,
-            tonalElevation = 6.dp,
-            shadowElevation = 8.dp,
-            modifier = Modifier.fillMaxWidth(),
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(70.dp)
+                .shadow(
+                    elevation = 26.dp,
+                    shape = shape,
+                    clip = false,
+                    ambientColor = Color.Black.copy(alpha = 0.22f),
+                    spotColor = Color.Black.copy(alpha = 0.3f),
+                )
+                .clip(shape)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(topGlass, bottomGlass),
+                    ),
+                )
+                .border(
+                    width = 1.dp,
+                    brush = Brush.linearGradient(
+                        colors = listOf(borderStart, borderEnd, borderStart.copy(alpha = 0.35f)),
+                    ),
+                    shape = shape,
+                )
+                .drawBehind {
+                    val cell = size.width / 3f
+                    val centerX = (highlight + 0.5f) * cell
+                    val radius = cell * 0.9f
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = if (light) 0.55f else 0.20f),
+                                Color.White.copy(alpha = 0.0f),
+                            ),
+                            center = Offset(centerX, size.height * 0.12f),
+                            radius = radius,
+                        ),
+                        radius = radius,
+                        center = Offset(centerX, size.height * 0.12f),
+                    )
+                    drawOval(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.0f),
+                                Color.White.copy(alpha = if (light) 0.45f else 0.16f),
+                                Color.White.copy(alpha = 0.0f),
+                            ),
+                        ),
+                        topLeft = Offset(centerX - cell * 0.55f, -size.height * 0.35f),
+                        size = androidx.compose.ui.geometry.Size(cell * 1.1f, size.height * 0.9f),
+                    )
+                    drawLine(
+                        color = Color.White.copy(alpha = if (light) 0.65f else 0.18f),
+                        start = Offset(18.dp.toPx(), 1.dp.toPx()),
+                        end = Offset(size.width - 18.dp.toPx(), 1.dp.toPx()),
+                        strokeWidth = 1.dp.toPx(),
+                    )
+                },
         ) {
             Row(
-                Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 8.dp),
+                Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 tabs.forEach { (tab, label, icon) ->
                     val selected = tab == current
+                    val interaction = remember { MutableInteractionSource() }
+                    val pressed by interaction.collectIsPressedAsState()
+                    val scale by animateFloatAsState(
+                        targetValue = if (pressed) 0.92f else 1f,
+                        animationSpec = spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessMedium),
+                        label = "pressScale",
+                    )
                     val bg by animateColorAsState(
-                        if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                        targetValue = if (selected) {
+                            MaterialTheme.colorScheme.primary.copy(alpha = if (light) 0.16f else 0.28f)
+                        } else Color.Transparent,
                         label = "navBg",
                     )
                     Column(
                         Modifier
                             .weight(1f)
-                            .clip(RoundedCornerShape(22.dp))
+                            .graphicsLayer { scaleX = scale; scaleY = scale }
+                            .clip(RoundedCornerShape(24.dp))
                             .background(bg)
-                            .clickable { onSelect(tab) }
-                            .padding(vertical = 8.dp),
+                            .clickable(
+                                interactionSource = interaction,
+                                indication = null,
+                            ) {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                onSelect(tab)
+                            }
+                            .padding(vertical = 7.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Icon(
                             icon,
                             contentDescription = label,
-                            tint = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(22.dp),
+                            tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(21.dp),
                         )
                         Spacer(Modifier.height(3.dp))
                         Text(
                             label,
                             fontSize = 10.5.sp,
                             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                            color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }

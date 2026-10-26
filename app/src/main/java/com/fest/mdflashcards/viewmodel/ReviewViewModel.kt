@@ -137,6 +137,10 @@ class ReviewViewModel(private val repo: FlashcardRepository) : ViewModel() {
         _ui.value = _ui.value.copy(card = card, revealed = true)
     }
 
+    fun hideAnswer() {
+        _ui.value = _ui.value.copy(revealed = false)
+    }
+
     fun rate(rating: Rating) {
         val card = current ?: return
         if (!_ui.value.revealed) return

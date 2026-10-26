@@ -1,6 +1,7 @@
 package com.fest.mdflashcards.ui.pages
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -30,6 +31,7 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
@@ -48,6 +50,8 @@ import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -76,6 +80,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fest.mdflashcards.data.Deck
+import com.fest.mdflashcards.data.SampleMarkdown
 import com.fest.mdflashcards.data.FlashcardRepository
 import com.fest.mdflashcards.domain.ParseOptions
 import com.fest.mdflashcards.ui.components.ChipRow
@@ -145,7 +150,7 @@ fun HomeScreen(
                 start = 18.dp,
                 end = 18.dp,
                 top = padding.calculateTopPadding() + 4.dp,
-                bottom = padding.calculateBottomPadding() + 110.dp,
+                bottom = padding.calculateBottomPadding() + 120.dp,
             ),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -386,6 +391,7 @@ private fun ImportSheet(
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val uris = remember { mutableStateListOf<Uri>() }
+    val imageUris = remember { mutableStateListOf<Uri>() }
     var paste by remember { mutableStateOf("") }
     var mode by remember { mutableStateOf("auto") }
     var qstyle by remember { mutableStateOf("prompt") }
@@ -398,6 +404,12 @@ private fun ImportSheet(
             uris.clear()
             uris.addAll(result)
             tab = 0
+        }
+    }
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { result ->
+        if (result.isNotEmpty()) {
+            imageUris.clear()
+            imageUris.addAll(result)
         }
     }
 
@@ -450,6 +462,33 @@ private fun ImportSheet(
                         }
                     }
                 }
+                Spacer(Modifier.height(10.dp))
+                OutlinedButton(
+                    onClick = { imagePicker.launch(arrayOf("image/*")) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                ) {
+                    Icon(Icons.Outlined.Image, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.size(6.dp))
+                    Text(s.chooseImages, fontSize = 12.sp)
+                }
+                if (imageUris.isNotEmpty()) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "${s.imagesSelected.fmt(imageUris.size)} · ${s.imageHint}",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+                TextButton(onClick = {
+                    val path = SampleMarkdown.save(context)
+                    Toast.makeText(
+                        context,
+                        if (path != null) s.sampleSaved.fmt(path) else s.sampleFailed,
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }) { Text(s.saveSample, fontSize = 12.sp) }
             } else {
                 OutlinedTextField(
                     value = paste,
@@ -502,28 +541,35 @@ private fun ImportSheet(
                     scope.launch {
                         var summary = com.fest.mdflashcards.data.ImportSummary()
                         val opts = parseOptions()
+                        val imageImport = if (imageUris.isNotEmpty()) vm.importImages(imageUris.toList())
+                        else com.fest.mdflashcards.data.ImageImport()
+                        fun merge(r: com.fest.mdflashcards.data.ImportSummary) {
+                            summary = summary.copy(
+                                decks = summary.decks + r.decks,
+                                cards = summary.cards + r.cards,
+                                images = summary.images + r.images,
+                                replaced = summary.replaced + r.replaced,
+                                skipped = summary.skipped + r.skipped,
+                                messages = summary.messages + r.messages,
+                            )
+                        }
+                        summary = summary.copy(images = imageImport.count)
                         if (tab == 0) {
-                            uris.forEach { uri ->
-                                val r = vm.importUri(uri, opts)
-                                summary = summary.copy(
-                                    decks = summary.decks + r.decks,
-                                    cards = summary.cards + r.cards,
-                                    replaced = summary.replaced + r.replaced,
-                                    skipped = summary.skipped + r.skipped,
-                                    messages = summary.messages + r.messages,
-                                )
-                            }
+                            uris.forEach { uri -> merge(vm.importUri(uri, opts, imageImport.renames)) }
                         } else {
                             val name = paste.lineSequence().firstOrNull { it.trim().startsWith("#") }
                                 ?.trim()?.removePrefix("#")?.trim()?.take(40)
                                 ?: "粘贴笔记"
-                            summary = vm.importText(name, paste, opts)
+                            merge(vm.importText(name, paste, opts, imageImport.renames))
                         }
                         importing = false
-                        if (summary.decks == 0 && summary.messages.isEmpty()) {
-                            onDone(summary.copy(messages = listOf(s.importEmpty)))
+                        val withImages = if (summary.images > 0) {
+                            summary.copy(messages = summary.messages + s.imagesSelected.fmt(summary.images))
+                        } else summary
+                        if (withImages.decks == 0 && withImages.messages.isEmpty()) {
+                            onDone(withImages.copy(messages = listOf(s.importEmpty)))
                         } else {
-                            onDone(summary)
+                            onDone(withImages)
                         }
                     }
                 },

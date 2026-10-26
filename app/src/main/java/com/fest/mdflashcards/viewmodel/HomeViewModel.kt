@@ -98,9 +98,13 @@ class HomeViewModel(private val repo: FlashcardRepository) : ViewModel() {
     fun startReview(deckId: String, count: Int, weakOnly: Boolean, chapter: String): Boolean =
         repo.startReview(deckId, count, weakOnly, chapter)
 
-    suspend fun importUri(uri: Uri, options: ParseOptions): ImportSummary = repo.importUri(uri, options)
-    suspend fun importText(name: String, text: String, options: ParseOptions): ImportSummary =
-        repo.importMarkdown(name, text, options)
+    suspend fun importUri(uri: Uri, options: ParseOptions, imageRenames: Map<String, String> = emptyMap()): ImportSummary =
+        repo.importUri(uri, options, imageRenames = imageRenames)
+
+    suspend fun importText(name: String, text: String, options: ParseOptions, imageRenames: Map<String, String> = emptyMap()): ImportSummary =
+        repo.importMarkdown(name, text, options, imageRenames = imageRenames)
+
+    suspend fun importImages(uris: List<Uri>) = repo.importImages(uris)
 
     fun error(): StateFlow<String?> = repo.lastError
     fun clearError() = repo.clearError()

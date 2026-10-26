@@ -1,17 +1,32 @@
 package com.fest.mdflashcards.ui.pages
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,23 +50,35 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.lerp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.fest.mdflashcards.data.Card
 import com.fest.mdflashcards.domain.Rating
 import com.fest.mdflashcards.ui.components.MarkdownText
 import com.fest.mdflashcards.ui.i18n.LocalStrings
 import com.fest.mdflashcards.ui.i18n.fmt
 import com.fest.mdflashcards.ui.theme.LocalReading
+import com.fest.mdflashcards.viewmodel.ReviewUiState
 import com.fest.mdflashcards.viewmodel.ReviewViewModel
+import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +89,6 @@ fun ReviewScreen(
 ) {
     val s = LocalStrings.current
     val ui by vm.ui.collectAsStateWithLifecycle()
-    val reading = LocalReading.current
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -123,79 +149,32 @@ fun ReviewScreen(
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant,
             )
-            Column(
-                Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 18.dp),
-            ) {
-                if (card.path.isNotEmpty()) {
-                    Text(
-                        card.path.joinToString("  /  "),
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
-                    )
-                    Spacer(Modifier.height(6.dp))
-                }
-                Text(card.title.ifBlank { card.question }, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
-                if (card.question.isNotBlank()) {
-                    Spacer(Modifier.height(10.dp))
-                    MarkdownText(
-                        markdown = card.question,
-                        baseFontSize = 16f * reading.fontScale,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Spacer(Modifier.height(18.dp))
-                Surface(
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerLow,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .then(
-                            if (ui.revealed) Modifier.pointerInput(ui.card?.id) {
-                                var drag = 0f
-                                detectHorizontalDragGestures(
-                                    onDragStart = { drag = 0f },
-                                    onHorizontalDrag = { _, delta -> drag += delta },
-                                    onDragEnd = {
-                                        if (drag > 90) vm.rate(Rating.GOT)
-                                        else if (drag < -90) vm.rate(Rating.FORGOT)
-                                    },
-                                )
-                            } else Modifier,
-                        ),
-                ) {
-                    Box(Modifier.padding(20.dp)) {
-                        if (!ui.revealed) {
-                            Column(
-                                Modifier.fillMaxWidth().padding(vertical = 42.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                            ) {
-                                Text(s.tapReveal, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
-                                Spacer(Modifier.height(18.dp))
-                                FilledTonalButton(onClick = { vm.reveal() }) { Text(s.showAnswer) }
-                            }
-                        } else {
-                            Column {
-                                Text(s.answerLabel, fontSize = 11.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
-                                Spacer(Modifier.height(8.dp))
-                                MarkdownText(
-                                    markdown = card.answer,
-                                    baseFontSize = 15.5f * reading.fontScale,
-                                )
-                                Spacer(Modifier.height(10.dp))
-                                Text(s.swipeHint, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                    }
-                }
-                Spacer(Modifier.height(22.dp))
+            if (card.path.isNotEmpty()) {
+                Text(
+                    card.path.joinToString("  /  "),
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+                    modifier = Modifier.padding(horizontal = 22.dp).padding(top = 12.dp),
+                )
             }
-
-            if (ui.revealed) {
+            FlipSwipeCard(
+                card = card,
+                revealed = ui.revealed,
+                onReveal = vm::reveal,
+                onHide = vm::hideAnswer,
+                onRate = vm::rate,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(horizontal = 18.dp, vertical = 10.dp),
+            )
+            AnimatedVisibility(
+                visible = ui.revealed,
+                enter = fadeIn() + slideInVertically { it / 2 },
+                exit = fadeOut() + slideOutVertically { it / 2 },
+            ) {
                 Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     RatingButton(
@@ -226,11 +205,173 @@ fun ReviewScreen(
 }
 
 @Composable
+private fun FlipSwipeCard(
+    card: Card,
+    revealed: Boolean,
+    onReveal: () -> Unit,
+    onHide: () -> Unit,
+    onRate: (Rating) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val s = LocalStrings.current
+    val reading = LocalReading.current
+    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val rotation by animateFloatAsState(
+        targetValue = if (revealed) 180f else 0f,
+        animationSpec = tween(460, easing = FastOutSlowInEasing),
+        label = "flip",
+    )
+    val offset = remember(card.id) { Animatable(0f) }
+    var width by remember { mutableFloatStateOf(0f) }
+    val swipeColor = when {
+        offset.value > 24f -> MaterialTheme.colorScheme.primary
+        offset.value < -24f -> MaterialTheme.colorScheme.error
+        else -> Color.Transparent
+    }
+
+    LaunchedEffect(card.id) { offset.snapTo(0f) }
+
+    Box(
+        modifier
+            .onSizeChanged { width = it.width.toFloat() }
+            .graphicsLayer {
+                translationX = offset.value
+                rotationZ = if (width > 0f) (offset.value / width) * 9f else 0f
+                alpha = 1f - (abs(offset.value) / (width.coerceAtLeast(1f) * 2.2f)).coerceIn(0f, 0.55f)
+            }
+            .border(2.dp, swipeColor.copy(alpha = 0.75f), RoundedCornerShape(28.dp))
+            .pointerInput(revealed, card.id) {
+                if (!revealed) return@pointerInput
+                detectHorizontalDragGestures(
+                    onHorizontalDrag = { change, amount ->
+                        change.consume()
+                        scope.launch { offset.snapTo(offset.value + amount) }
+                    },
+                    onDragEnd = {
+                        val threshold = (width * 0.28f).coerceAtLeast(120f)
+                        when {
+                            offset.value > threshold -> scope.launch {
+                                offset.animateTo(width * 1.5f, tween(220, easing = FastOutSlowInEasing))
+                                onRate(Rating.GOT)
+                            }
+                            offset.value < -threshold -> scope.launch {
+                                offset.animateTo(-width * 1.5f, tween(220, easing = FastOutSlowInEasing))
+                                onRate(Rating.FORGOT)
+                            }
+                            else -> scope.launch {
+                                offset.animateTo(0f, spring(dampingRatio = 0.7f, stiffness = Spring.StiffnessMedium))
+                            }
+                        }
+                    },
+                    onDragCancel = {
+                        scope.launch { offset.animateTo(0f, spring(dampingRatio = 0.7f, stiffness = Spring.StiffnessMedium)) }
+                    },
+                )
+            }
+            .clickable(
+                onClick = { if (revealed) onHide() else onReveal() },
+            ),
+    ) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    rotationY = rotation
+                    cameraDistance = 14f * density.density
+                },
+        ) {
+            val frontAlpha = (1f - rotation / 90f).coerceIn(0f, 1f)
+            val backAlpha = ((rotation - 90f) / 90f).coerceIn(0f, 1f)
+
+            if (rotation <= 90f) {
+                CardFace(
+                    modifier = Modifier.fillMaxSize().graphicsLayer { alpha = frontAlpha },
+                    background = Brush.verticalGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.surfaceContainerLow,
+                            MaterialTheme.colorScheme.surfaceContainer,
+                        ),
+                    ),
+                    footer = s.flipHint,
+                ) {
+                    Text(card.title.ifBlank { "知识点" }, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+                    if (card.question.isNotBlank()) {
+                        Spacer(Modifier.height(12.dp))
+                        MarkdownText(
+                            markdown = card.question,
+                            baseFontSize = 16f * reading.fontScale,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            } else {
+                CardFace(
+                    modifier = Modifier.fillMaxSize().graphicsLayer {
+                        rotationY = 180f
+                        alpha = backAlpha
+                    },
+                    background = Brush.verticalGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
+                            MaterialTheme.colorScheme.surfaceContainerLow,
+                        ),
+                    ),
+                    footer = s.swipeHint2,
+                ) {
+                    Text(s.answerLabel, fontSize = 11.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(8.dp))
+                    MarkdownText(
+                        markdown = card.answer,
+                        baseFontSize = 15.5f * reading.fontScale,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CardFace(
+    modifier: Modifier,
+    background: Brush,
+    footer: String,
+    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(28.dp),
+        color = Color.Transparent,
+        shadowElevation = 10.dp,
+        tonalElevation = 0.dp,
+    ) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .background(background)
+                .padding(22.dp),
+        ) {
+            Column(
+                Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
+                content = content,
+            )
+            Spacer(Modifier.height(10.dp))
+            Text(
+                footer,
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+        }
+    }
+}
+
+@Composable
 private fun RatingButton(
     text: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
-    color: androidx.compose.ui.graphics.Color,
-    content: androidx.compose.ui.graphics.Color,
+    color: Color,
+    content: Color,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
@@ -248,7 +389,7 @@ private fun RatingButton(
 
 @Composable
 private fun FinishedContent(
-    ui: com.fest.mdflashcards.viewmodel.ReviewUiState,
+    ui: ReviewUiState,
     modifier: Modifier = Modifier,
     onAgain: () -> Unit,
     onBack: () -> Unit,

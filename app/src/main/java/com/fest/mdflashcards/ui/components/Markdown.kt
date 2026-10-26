@@ -1,5 +1,7 @@
 package com.fest.mdflashcards.ui.components
 
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -19,8 +22,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -30,6 +40,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
 import com.fest.mdflashcards.ui.theme.LocalReading
 
 /** A deliberately small, dependency-free Markdown renderer for card content. */
@@ -42,6 +55,7 @@ object MarkdownParser {
         data class Bullet(val indent: Int, val marker: String, val text: String) : Block
         data class Rule(val dummy: Unit = Unit) : Block
         data class Table(val rows: List<List<String>>) : Block
+        data class Image(val alt: String, val path: String) : Block
     }
 
     private val fence = Regex("^ {0,3}(`{3,}|~{3,})\\s*([^\\s`]*)\\s*$")
@@ -129,6 +143,13 @@ object MarkdownParser {
                 continue
             }
 
+            val image = Regex("^\\s*!\\[([^\\]]*)]\\(([^)\\s]+)(?:\\s+\"[^\"]*\")?\\)\\s*$").find(line)
+            if (image != null) {
+                blocks += Block.Image(image.groupValues[1], image.groupValues[2])
+                i++
+                continue
+            }
+
             val pbuf = ArrayList<String>()
             while (i < lines.size && !isBlockStart(i)) {
                 pbuf += lines[i]
@@ -178,10 +199,56 @@ object MarkdownParser {
                 is Block.Bullet -> b.text
                 is Block.Code -> b.text
                 is Block.Table -> b.rows.flatten().joinToString(" ")
+                is Block.Image -> b.alt
                 is Block.Rule -> ""
             }
         }.replace(Regex("\\s+"), " ").trim()
 }
+
+@Composable
+private fun LocalImage(path: String, alt: String) {
+    val context = LocalContext.current
+    val fileName = remember(path) { path.substringAfterLast('/').substringAfterLast('\\').substringBefore('?') }
+    val file = remember(fileName) { File(File(context.filesDir, "images"), fileName) }
+    val bitmap by produceState<ImageBitmap?>(initialValue = null, file.absolutePath) {
+        value = withContext(Dispatchers.IO) { decodeSampledBitmap(file.absolutePath)?.asImageBitmap() }
+    }
+    val image = bitmap
+    if (image != null) {
+        Image(
+            bitmap = image,
+            contentDescription = alt.ifBlank { fileName },
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 420.dp)
+                .clip(RoundedCornerShape(12.dp)),
+        )
+    } else {
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                "图片未导入：$fileName",
+                modifier = Modifier.padding(14.dp),
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+private fun decodeSampledBitmap(path: String, maxDimension: Int = 1400): android.graphics.Bitmap? = runCatching {
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeFile(path, bounds)
+    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+    var sample = 1
+    while (bounds.outWidth / sample > maxDimension || bounds.outHeight / sample > maxDimension) sample *= 2
+    val options = BitmapFactory.Options().apply { inSampleSize = sample }
+    BitmapFactory.decodeFile(path, options)
+}.getOrNull()
 
 private fun inlineString(
     text: String,
@@ -381,6 +448,9 @@ fun MarkdownText(
                                 modifier = Modifier.weight(1f),
                             )
                         }
+                    }
+                    is MarkdownParser.Block.Image -> {
+                        LocalImage(path = block.path, alt = block.alt)
                     }
                     is MarkdownParser.Block.Rule -> {
                         Box(

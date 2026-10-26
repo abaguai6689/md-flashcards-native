@@ -5,6 +5,7 @@ import com.fest.mdflashcards.data.Card
 import com.fest.mdflashcards.data.CardStat
 import com.fest.mdflashcards.data.Deck
 import com.fest.mdflashcards.data.Settings
+import com.fest.mdflashcards.data.UpdateChecker
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -34,6 +35,14 @@ class StateSerializationTest {
         assertEquals(99L, back.stats["c1"]!!.dueAt)
         assertEquals(5, back.daily["2026-10-25"])
         assertEquals("en", back.settings.lang)
+    }
+
+    @Test
+    fun comparesReleaseVersionsNumerically() {
+        assertTrue(UpdateChecker.compareVersions("1.1.0", "1.0.9") > 0)
+        assertTrue(UpdateChecker.compareVersions("v1.2.0", "1.1.9") > 0)
+        assertTrue(UpdateChecker.compareVersions("1.0.0", "1.0.0") == 0)
+        assertTrue(UpdateChecker.compareVersions("1.0.0", "1.1.0") < 0)
     }
 
     @Test

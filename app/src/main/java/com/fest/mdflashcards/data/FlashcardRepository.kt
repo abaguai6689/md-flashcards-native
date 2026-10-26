@@ -33,9 +33,15 @@ import kotlin.random.Random
 data class ImportSummary(
     val decks: Int = 0,
     val cards: Int = 0,
+    val images: Int = 0,
     val replaced: Int = 0,
     val skipped: Int = 0,
     val messages: List<String> = emptyList(),
+)
+
+data class ImageImport(
+    val renames: Map<String, String> = emptyMap(),
+    val count: Int = 0,
 )
 
 class FlashcardRepository(private val context: Context) {
@@ -46,6 +52,7 @@ class FlashcardRepository(private val context: Context) {
         prettyPrint = false
     }
     private val stateFile = File(context.filesDir, "state.json")
+    private val imagesDir = File(context.filesDir, "images").apply { mkdirs() }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val writeMutex = Mutex()
     private var saveJob: Job? = null
@@ -119,6 +126,42 @@ class FlashcardRepository(private val context: Context) {
         }
     }
 
+    /* ------------------------------ images ------------------------------ */
+
+    suspend fun importImages(uris: List<Uri>): ImageImport = withContext(Dispatchers.IO) {
+        val renames = linkedMapOf<String, String>()
+        var count = 0
+        uris.forEach { uri ->
+            val name = displayName(uri)?.substringAfterLast('/')?.substringAfterLast('\\') ?: return@forEach
+            if (!isImageName(name)) return@forEach
+            val bytes = readBytes(uri) ?: return@forEach
+            val stored = storeImage(name, bytes) ?: return@forEach
+            renames[name] = stored
+            count++
+        }
+        ImageImport(renames, count)
+    }
+
+    private fun storeImage(originalName: String, bytes: ByteArray): String? {
+        if (bytes.isEmpty()) return null
+        val base = originalName.substringAfterLast('/').substringAfterLast('\\')
+        val rawExt = base.substringAfterLast('.', "").lowercase()
+        val ext = rawExt.takeIf { it in setOf("png", "jpg", "jpeg", "gif", "webp", "bmp", "svg", "avif", "heic", "heif") } ?: "png"
+        val stem = sanitizeName(base.substringBeforeLast('.')).ifBlank { "image" }
+        val digest = java.security.MessageDigest.getInstance("SHA-256").digest(bytes)
+            .joinToString("") { "%02x".format(it) }.take(12)
+        val filename = "$digest-$stem.$ext"
+        val file = File(imagesDir, filename)
+        if (!file.exists()) runCatching { file.writeBytes(bytes) }
+        return filename
+    }
+
+    private fun isImageName(name: String): Boolean =
+        Regex("\\.(png|jpe?g|gif|webp|bmp|svg|avif|heic|heif)$", RegexOption.IGNORE_CASE).containsMatchIn(name)
+
+    private fun sanitizeName(value: String): String =
+        value.replace(Regex("[\\\\/:*?\"<>|]"), "_").trim().take(60)
+
     /* ------------------------------ import ------------------------------ */
 
     suspend fun importMarkdown(
@@ -126,12 +169,14 @@ class FlashcardRepository(private val context: Context) {
         text: String,
         options: ParseOptions = ParseOptions(),
         allowReplace: Boolean = true,
+        imageRenames: Map<String, String> = emptyMap(),
     ): ImportSummary = withContext(Dispatchers.Default) {
-        if (text.trim().length < 10) return@withContext ImportSummary(skipped = 1, messages = listOf("$name 内容太短"))
-        val parsed = CardParser.buildDeck(name, text, options)
+        val rewritten = ImageRefs.rewrite(text, imageRenames)
+        if (rewritten.trim().length < 10) return@withContext ImportSummary(skipped = 1, messages = listOf("$name 内容太短"))
+        val parsed = CardParser.buildDeck(name, rewritten, options)
         if (parsed.cards.isEmpty()) return@withContext ImportSummary(skipped = 1, messages = listOf("$name 未解析出卡片"))
 
-        val tags = parseDeckTags(text)
+        val tags = parseDeckTags(rewritten)
         val cards = parsed.cards.map { p ->
             parsedCardToCard(p).copy(tags = parseInlineTags(p.answer + " " + p.question))
         }
@@ -142,7 +187,7 @@ class FlashcardRepository(private val context: Context) {
             createdAt = System.currentTimeMillis(),
             mode = parsed.mode,
             qstyle = parsed.qstyle,
-            raw = text,
+            raw = rewritten,
             tags = tags,
             cards = cards,
         )
@@ -176,13 +221,18 @@ class FlashcardRepository(private val context: Context) {
         )
     }
 
-    suspend fun importUri(uri: Uri, options: ParseOptions, allowReplace: Boolean = true): ImportSummary {
+    suspend fun importUri(
+        uri: Uri,
+        options: ParseOptions,
+        allowReplace: Boolean = true,
+        imageRenames: Map<String, String> = emptyMap(),
+    ): ImportSummary {
         val name = displayName(uri) ?: "note.md"
         val bytes = readBytes(uri) ?: return ImportSummary(skipped = 1, messages = listOf("无法读取文件"))
         return if (name.endsWith(".zip", true) || looksLikeZip(bytes)) {
-            importZip(name, bytes, options, allowReplace)
+            importZip(name, bytes, options, allowReplace, imageRenames)
         } else {
-            importMarkdown(name, decodeText(bytes), options, allowReplace)
+            importMarkdown(name, decodeText(bytes), options, allowReplace, imageRenames)
         }
     }
 
@@ -191,30 +241,45 @@ class FlashcardRepository(private val context: Context) {
         bytes: ByteArray,
         options: ParseOptions,
         allowReplace: Boolean,
+        externalRenames: Map<String, String> = emptyMap(),
     ): ImportSummary = withContext(Dispatchers.Default) {
-        val aggregate = ArrayList<ImportSummary>()
+        val texts = ArrayList<Pair<String, String>>()
+        val renames = externalRenames.toMutableMap()
+        var imageCount = 0
         ZipInputStream(BufferedInputStream(bytes.inputStream())).use { zip ->
             var entry = zip.nextEntry
             var guard = 0
-            while (entry != null && guard < 500) {
+            while (entry != null && guard < 800) {
                 guard++
                 val entryName = entry.name.replace('\\', '/')
                 val base = entryName.substringAfterLast('/')
-                if (!entry.isDirectory && !entryName.startsWith("__MACOSX/") && !base.startsWith(".") &&
-                    Regex("\\.(md|markdown|txt)$", RegexOption.IGNORE_CASE).containsMatchIn(entryName)
-                ) {
-                    val text = decodeText(zip.readBytes())
-                    if (text.trim().length >= 10) {
-                        aggregate += importMarkdown(base, text, options, allowReplace)
+                if (!entry.isDirectory && !entryName.startsWith("__MACOSX/") && !base.startsWith(".")) {
+                    when {
+                        isImageName(base) -> {
+                            val imageBytes = zip.readBytes()
+                            storeImage(base, imageBytes)?.let {
+                                renames[base] = it
+                                imageCount++
+                            }
+                        }
+                        Regex("\\.(md|markdown|txt)$", RegexOption.IGNORE_CASE).containsMatchIn(entryName) -> {
+                            val text = decodeText(zip.readBytes())
+                            if (text.trim().length >= 10) texts += base to text
+                        }
                     }
                 }
                 zip.closeEntry()
                 entry = zip.nextEntry
             }
         }
+        val aggregate = ArrayList<ImportSummary>()
+        texts.forEach { (fileName, text) ->
+            aggregate += importMarkdown(fileName, text, options, allowReplace, renames)
+        }
         ImportSummary(
             decks = aggregate.sumOf { it.decks },
             cards = aggregate.sumOf { it.cards },
+            images = imageCount + aggregate.sumOf { it.images },
             replaced = aggregate.sumOf { it.replaced },
             skipped = aggregate.sumOf { it.skipped },
             messages = aggregate.flatMap { it.messages }.take(8),

@@ -50,6 +50,14 @@ data class Strings(
     val weakDesc: String = "答错过，或仍在盒 1 的卡片", val answerLabel: String = "答案",
     val mergeHint: String = "合并：保留本地进度，只补缺失。替换：用备份覆盖全部数据。",
     val heatLess: String = "少", val heatMore: String = "多", val weeks26: String = "最近 26 周",
+    val checkUpdate: String = "检查更新", val checking: String = "正在检查…",
+    val upToDate: String = "已是最新版本", val newVersion: String = "发现新版本 %s",
+    val updateFailed: String = "检查失败：%s", val goDownload: String = "前往下载",
+    val changelog: String = "更新日志", val currentVersion: String = "当前版本",
+    val saveSample: String = "保存示例 Markdown 到 Download", val sampleSaved: String = "示例已保存：%s",
+    val sampleFailed: String = "保存示例失败", val chooseImages: String = "选择图片（可选）",
+    val imagesSelected: String = "%d 张图片", val imageHint: String = "图片按文件名匹配，只保存在本机",
+    val flipHint: String = "点击卡片翻面", val swipeHint2: String = "背面左滑忘了 · 右滑记住",
 )
 
 val ZhHans = Strings(
@@ -149,6 +157,13 @@ val ZhHant = ZhHans.copy(
     weakDesc = "答錯過，或仍在盒 1 的卡片", answerLabel = "答案",
     mergeHint = "合併：保留本地進度，只補缺失。取代：用備份覆蓋全部資料。",
     heatLess = "少", heatMore = "多", weeks26 = "最近 26 週",
+    checkUpdate = "檢查更新", checking = "正在檢查…", upToDate = "已是最新版本",
+    newVersion = "發現新版本 %s", updateFailed = "檢查失敗：%s", goDownload = "前往下載",
+    changelog = "更新日誌", currentVersion = "目前版本",
+    saveSample = "儲存範例 Markdown 到 Download", sampleSaved = "範例已儲存：%s",
+    sampleFailed = "儲存範例失敗", chooseImages = "選擇圖片（選填）",
+    imagesSelected = "%d 張圖片", imageHint = "圖片依檔名配對，只保存在本機",
+    flipHint = "點擊卡片翻面", swipeHint2 = "背面左滑忘了 · 右滑記住",
 )
 
 val En = ZhHans.copy(
@@ -199,6 +214,13 @@ val En = ZhHans.copy(
     weakDesc = "Cards you missed, or still in box 1", answerLabel = "Answer",
     mergeHint = "Merge keeps local progress and only fills gaps. Replace overwrites everything with the backup.",
     heatLess = "Less", heatMore = "More", weeks26 = "Last 26 weeks",
+    checkUpdate = "Check for updates", checking = "Checking…", upToDate = "You are up to date",
+    newVersion = "New version %s", updateFailed = "Check failed: %s", goDownload = "Download",
+    changelog = "Changelog", currentVersion = "Current version",
+    saveSample = "Save sample Markdown to Downloads", sampleSaved = "Sample saved: %s",
+    sampleFailed = "Could not save sample", chooseImages = "Choose images (optional)",
+    imagesSelected = "%d images", imageHint = "Images match by file name and stay on this device",
+    flipHint = "Tap the card to flip", swipeHint2 = "Swipe left to forget · right to remember",
 )
 
 val LocalStrings = compositionLocalOf { ZhHans }

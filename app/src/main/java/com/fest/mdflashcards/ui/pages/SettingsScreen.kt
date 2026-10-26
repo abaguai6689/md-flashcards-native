@@ -53,12 +53,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fest.mdflashcards.BuildConfig
+import com.fest.mdflashcards.data.Changelog
+import com.fest.mdflashcards.data.UpdateChecker
 import com.fest.mdflashcards.ui.components.ActionRow
 import com.fest.mdflashcards.ui.components.ConfirmDialog
 import com.fest.mdflashcards.ui.components.SectionHeader
+import com.fest.mdflashcards.ui.components.ThinDivider
 import com.fest.mdflashcards.ui.i18n.LocalStrings
 import com.fest.mdflashcards.ui.i18n.fmt
 import com.fest.mdflashcards.viewmodel.SettingsViewModel
+import com.fest.mdflashcards.viewmodel.UpdateStatus
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,10 +70,12 @@ import kotlinx.coroutines.launch
 fun SettingsScreen(vm: SettingsViewModel, snackbar: SnackbarHostState) {
     val s = LocalStrings.current
     val settings by vm.settings.collectAsStateWithLifecycle()
+    val update by vm.update.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var clearOpen by remember { mutableStateOf(false) }
     var pendingImport by remember { mutableStateOf<Uri?>(null) }
+    var changelogOpen by remember { mutableStateOf(false) }
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) {
@@ -94,7 +100,7 @@ fun SettingsScreen(vm: SettingsViewModel, snackbar: SnackbarHostState) {
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 18.dp)
-                .padding(bottom = 96.dp),
+                .padding(bottom = 112.dp),
         ) {
             Spacer(Modifier.height(4.dp))
             SectionHeader(s.settingsGeneral)
@@ -179,22 +185,67 @@ fun SettingsScreen(vm: SettingsViewModel, snackbar: SnackbarHostState) {
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text(s.appName, fontWeight = FontWeight.SemiBold)
-                            Text("${s.version} ${BuildConfig.VERSION_NAME}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("${s.currentVersion} ${BuildConfig.VERSION_NAME}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                     Spacer(Modifier.height(12.dp))
-                    Text(s.designNote, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(10.dp))
                     Text(
-                        "github.com/fest77/flash-memory-cards",
+                        UpdateChecker.REPO_URL,
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable {
-                            runCatching {
-                                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/fest77/flash-memory-cards")))
-                            }
+                            runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(UpdateChecker.REPO_URL))) }
                         },
                     )
+                    Spacer(Modifier.height(12.dp))
+                    ThinDivider()
+                    Spacer(Modifier.height(6.dp))
+                    Row(
+                        Modifier.fillMaxWidth().clickable {
+                            if (update.status != UpdateStatus.CHECKING) vm.checkUpdate()
+                        }.padding(vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(s.checkUpdate, fontWeight = FontWeight.Medium)
+                            val status = when (update.status) {
+                                UpdateStatus.IDLE -> ""
+                                UpdateStatus.CHECKING -> s.checking
+                                UpdateStatus.UP_TO_DATE -> "${s.upToDate} · v${update.latestVersion}"
+                                UpdateStatus.AVAILABLE -> s.newVersion.fmt(update.latestVersion)
+                                UpdateStatus.FAILED -> s.updateFailed.fmt(update.error)
+                            }
+                            if (status.isNotBlank()) {
+                                Text(
+                                    status,
+                                    fontSize = 11.sp,
+                                    color = if (update.status == UpdateStatus.FAILED) MaterialTheme.colorScheme.error
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                        if (update.status == UpdateStatus.AVAILABLE) {
+                            TextButton(onClick = {
+                                runCatching {
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(update.releaseUrl)))
+                                }
+                            }) { Text(s.goDownload) }
+                        } else {
+                            Text(
+                                if (update.status == UpdateStatus.CHECKING) "…" else "›",
+                                color = MaterialTheme.colorScheme.primary,
+                                fontSize = 18.sp,
+                            )
+                        }
+                    }
+                    ThinDivider()
+                    Row(
+                        Modifier.fillMaxWidth().clickable { changelogOpen = true }.padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(s.changelog, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+                        Text("›", color = MaterialTheme.colorScheme.primary, fontSize = 18.sp)
+                    }
                 }
             }
             Spacer(Modifier.height(20.dp))
@@ -238,6 +289,31 @@ fun SettingsScreen(vm: SettingsViewModel, snackbar: SnackbarHostState) {
                     TextButton(onClick = { pendingImport = null }) { Text(s.cancel) }
                 }
             },
+        )
+    }
+
+    if (changelogOpen) {
+        AlertDialog(
+            onDismissRequest = { changelogOpen = false },
+            title = { Text(s.changelog) },
+            text = {
+                Column(Modifier.height(420.dp).verticalScroll(rememberScrollState())) {
+                    Changelog.entries.forEach { entry ->
+                        Text(
+                            "v${entry.version}  ·  ${entry.date}",
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        entry.changes.forEach { change ->
+                            Text("• $change", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(Modifier.height(2.dp))
+                        }
+                        Spacer(Modifier.height(14.dp))
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { changelogOpen = false }) { Text(s.close) } },
         )
     }
 }

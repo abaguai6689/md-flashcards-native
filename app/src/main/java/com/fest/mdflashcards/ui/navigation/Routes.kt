@@ -9,3 +9,5 @@ import kotlinx.serialization.Serializable
 @Serializable data class BrowseRoute(val deckId: String)
 @Serializable data object StatsRoute
 @Serializable data object SettingsRoute
+
+@Serializable data object RootRoute
