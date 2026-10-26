@@ -71,6 +71,9 @@ data class Strings(
     val settingsGeneralDesc: String = "主题、语言、预测性返回",
     val settingsReadingDesc: String = "字号、行距、卡片宽度",
     val settingsDataDesc: String = "备份、恢复、清空数据",
+    val predictiveBackSystemOff: String = "系统预测性返回未开启",
+    val predictiveBackSystemOffDesc: String = "系统开关 enable_back_animation 当前为 0。请在开发者选项中开启「预测性返回动画」，或执行 adb shell settings put global enable_back_animation 1 后重试。",
+    val openDeveloperOptions: String = "打开开发者选项",
 )
 
 val ZhHans = Strings(

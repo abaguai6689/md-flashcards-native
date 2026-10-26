@@ -398,7 +398,9 @@ data class AppState(
 
 - `AndroidManifest.xml` 开启 `android:enableOnBackInvokedCallback="true"`；
 - Navigation Compose 2.8.5 的 `NavHost` 在 Android 13+ 自动接入系统预测性返回；
-- 设置 → 通用中的「预测性返回」关闭时，在非根页面注册 `BackHandler` 立即返回，避免系统预览动画。
+- 设置 → 通用中的「预测性返回」关闭时，在非根页面注册 `BackHandler` 立即返回，避免系统预览动画；
+- 系统开关 `Settings.Global.ENABLE_BACK_ANIMATION`（`enable_back_animation`）必须为 1，否则任何 App 都不会出现返回预览。通用页会检测该值并提示，App 无权修改系统设置；
+- 手动开启：开发者选项 → 预测性返回动画，或 `adb shell settings put global enable_back_animation 1`。
 
 ## 18. 界面参考与许可
 

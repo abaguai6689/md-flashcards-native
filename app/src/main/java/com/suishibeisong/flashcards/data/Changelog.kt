@@ -13,6 +13,15 @@ data class ChangelogEntry(
 object Changelog {
     val entries = listOf(
         ChangelogEntry(
+            version = "1.5.1",
+            date = "2026-10-26",
+            changes = listOf(
+                "预测性返回：Activity 级显式开启 enableOnBackInvokedCallback",
+                "通用设置新增系统检测：若 enable_back_animation=0，提示开启系统预测性返回动画并提供开发者选项入口",
+                "说明：该开关属于 Android 系统设置，应用无权修改；需系统开启后预测性返回预览才会生效",
+            ),
+        ),
+        ChangelogEntry(
             version = "1.5.0",
             date = "2026-10-26",
             changes = listOf(
