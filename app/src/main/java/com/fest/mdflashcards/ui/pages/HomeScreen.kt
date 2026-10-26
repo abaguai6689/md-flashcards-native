@@ -19,6 +19,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -119,6 +122,7 @@ fun HomeScreen(
     var resetDeck by remember { mutableStateOf<Deck?>(null) }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -144,7 +148,7 @@ fun HomeScreen(
                 text = { Text(s.importButton) },
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.padding(bottom = 96.dp, end = 4.dp),
+                modifier = Modifier.padding(bottom = navInset + 70.dp, end = 4.dp),
             )
         },
         snackbarHost = { SnackbarHost(snackbar) },
@@ -155,7 +159,7 @@ fun HomeScreen(
                 start = 18.dp,
                 end = 18.dp,
                 top = padding.calculateTopPadding() + 4.dp,
-                bottom = padding.calculateBottomPadding() + 120.dp,
+                bottom = padding.calculateBottomPadding() + navInset + 96.dp,
             ),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {

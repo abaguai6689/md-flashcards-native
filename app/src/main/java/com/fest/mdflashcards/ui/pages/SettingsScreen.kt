@@ -13,6 +13,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -76,6 +79,7 @@ fun SettingsScreen(vm: SettingsViewModel, snackbar: SnackbarHostState) {
     var clearOpen by remember { mutableStateOf(false) }
     var pendingImport by remember { mutableStateOf<Uri?>(null) }
     var changelogOpen by remember { mutableStateOf(false) }
+    val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) {
@@ -100,7 +104,7 @@ fun SettingsScreen(vm: SettingsViewModel, snackbar: SnackbarHostState) {
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 18.dp)
-                .padding(bottom = 112.dp),
+                .padding(bottom = navInset + 96.dp),
         ) {
             Spacer(Modifier.height(4.dp))
             SectionHeader(s.settingsGeneral)

@@ -13,6 +13,13 @@ data class ChangelogEntry(
 object Changelog {
     val entries = listOf(
         ChangelogEntry(
+            version = "1.2.1",
+            date = "2026-10-26",
+            changes = listOf(
+                "导入按钮与页面底部留白按系统导航栏高度自适应，三键导航下不再被遮挡",
+            ),
+        ),
+        ChangelogEntry(
             version = "1.2.0",
             date = "2026-10-26",
             changes = listOf(

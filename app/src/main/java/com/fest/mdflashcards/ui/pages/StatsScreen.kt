@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -53,6 +56,7 @@ fun StatsScreen(vm: StatsViewModel) {
     val ui by vm.ui.collectAsStateWithLifecycle()
     var mode by remember { mutableStateOf("heat") }
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
+    val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -63,7 +67,7 @@ fun StatsScreen(vm: StatsViewModel) {
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 18.dp)
-                .padding(bottom = 112.dp),
+                .padding(bottom = navInset + 96.dp),
         ) {
             Spacer(Modifier.height(4.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(9.dp), modifier = Modifier.fillMaxWidth()) {
