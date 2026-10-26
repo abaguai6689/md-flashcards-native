@@ -148,10 +148,11 @@ fun DeckScreen(
                 Column(Modifier.padding(20.dp)) {
                     Text(deck.title.ifBlank { deck.name }, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(8.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(22.dp)) {
-                        Metric(deck.cards.size.toString(), s.count)
-                        Metric(ui.known.toString(), s.statKnown)
-                        Metric(ui.due.toString(), s.statDue)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Metric(deck.cards.size.toString(), s.cardsShort)
+                        Metric(ui.known.toString(), s.stateKnown)
+                        Metric(ui.newCount.toString(), s.stateNew)
+                        Metric(ui.markedCount.toString(), s.stateMarked)
                     }
                     Spacer(Modifier.height(14.dp))
                     LinearProgressIndicator(

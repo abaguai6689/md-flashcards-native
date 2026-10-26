@@ -62,6 +62,8 @@ data class Settings(
     val theme: String = "system",
     val lang: String = "zh",
     val statsView: String = "heat",
+    val checkUpdateAtStartup: Boolean = true,
+    val enablePredictiveBack: Boolean = true,
     val reading: ReadingSettings = ReadingSettings(),
     val tagFilter: String = "",
     val deckSort: String = "recent",

@@ -13,6 +13,18 @@ data class ChangelogEntry(
 object Changelog {
     val entries = listOf(
         ChangelogEntry(
+            version = "1.5.0",
+            date = "2026-10-26",
+            changes = listOf(
+                "笔记详情顶部新增「卡片 / 已掌握 / 尚未背诵 / 已标记」四类数量",
+                "设置新增「启动时检查更新」开关；启动检测到新版时弹窗显示版本号与 GitHub 最新更新日志",
+                "更新弹窗提供「立即更新 / 暂不更新」，立即更新打开对应 Release 页面",
+                "软件内更新日志保持本地完整历史；更新弹窗改为读取 GitHub Release 的正文，便于发布后修改",
+                "新增预测性返回（Android 13+），并在设置 → 通用中提供开关",
+                "设置拆分为通用 / 阅读 / 数据三个子页面，设置首页只保留入口，关于仍完整显示在最下方",
+            ),
+        ),
+        ChangelogEntry(
             version = "1.4.0",
             date = "2026-10-26",
             changes = listOf(

@@ -275,12 +275,15 @@ data class AppState(
 | 页面 | 关键内容 |
 |---|---|
 | Home | 统计条、继续学习、搜索/排序、笔记卡片、FAB、导入 Sheet（md/zip/图片/粘贴/示例/拆卡选项）；长按笔记或三点菜单可打开编辑框 |
-| Deck | 笔记信息、三项快捷入口、学习设置（数量/薄弱/章节/状态）、重命名/重置/删除 |
+| Deck | 笔记信息（卡片/已掌握/尚未背诵/已标记）、三项快捷入口、学习设置（数量/薄弱/章节/状态）、重命名/重置/删除 |
 | Review | 3D 翻面卡片、滑动评分、三档按钮、撤销、第 2 轮、完成摘要 |
 | Quick | 章节 Chip、题目目录 Sheet、折叠分组、搜索、跳转高亮 |
 | Browse | 搜索、卡片列表、编辑对话框、删卡、重置单卡 |
 | Stats | 今日/累计/连续、26 周热力图、7 天条形图、按日点击 |
-| Settings | 主题/语言/阅读、数据备份、检查更新、更新日志、关于 |
+| Settings | 通用 / 阅读 / 数据入口；关于卡（版本、仓库、检查更新、启动检查、更新日志） |
+| General | 主题、语言、预测性返回开关 |
+| Reading | 字号、行距、卡片宽度 |
+| Data | 导出备份、导入备份、清空数据 |
 
 ---
 
@@ -381,7 +384,23 @@ data class AppState(
 
 ---
 
-## 16. 界面参考与许可
+## 16. 检查更新与远程更新日志
+
+- 软件内「关于 → 更新日志」读取 `data/Changelog.kt`，随 APK 打包，保持完整历史，不联网。
+- 启动检查更新读取 GitHub `releases/latest`：
+  - Release `body` 作为弹窗中的最新更新日志；
+  - `tag_name` 与 `BuildConfig.VERSION_NAME` 做数字段比较；
+  - 只有检测到更高版本且「启动时检查更新」开启时才弹窗。
+- 发布时通过 `.github/workflows/android.yml` 的 `body_path: RELEASE_NOTES.md` 把仓库根目录的 `RELEASE_NOTES.md` 写进 GitHub Release 正文；以后只改这个文件即可更新弹窗内容，不需要改 APK。
+- 「立即更新」打开对应 Release 页面；「暂不更新」仅关闭当次弹窗，下次启动仍会检查。
+
+## 17. 预测性返回
+
+- `AndroidManifest.xml` 开启 `android:enableOnBackInvokedCallback="true"`；
+- Navigation Compose 2.8.5 的 `NavHost` 在 Android 13+ 自动接入系统预测性返回；
+- 设置 → 通用中的「预测性返回」关闭时，在非根页面注册 `BackHandler` 立即返回，避免系统预览动画。
+
+## 18. 界面参考与许可
 
 - 液态玻璃底栏的视觉与交互参考：
   - [Kyant0/AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass)（Apache-2.0）
@@ -391,7 +410,7 @@ data class AppState(
 - 以上均为设计/交互参考；本项目代码为 Kotlin/Compose 独立实现。
 - 第三方许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
-## 17. 签名与覆盖安装
+## 19. 签名与覆盖安装
 
 - 固定签名文件：`keystore/md-flashcards.jks`，alias `mdflashcards`；
 - 包名：`com.suishibeisong.flashcards`；应用名：闪卡背诵；仓库：`abaguai6689/suishibeisong`；

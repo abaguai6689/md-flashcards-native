@@ -1,17 +1,34 @@
 package com.suishibeisong.flashcards.ui
 
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.BackHandler
+
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -21,16 +38,23 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.suishibeisong.flashcards.data.FlashcardRepository
 import com.suishibeisong.flashcards.ui.components.FloatingNavBar
+import com.suishibeisong.flashcards.ui.components.MarkdownText
 import com.suishibeisong.flashcards.ui.components.MainTab
 import com.suishibeisong.flashcards.ui.i18n.LocalStrings
 import com.suishibeisong.flashcards.ui.i18n.stringsFor
 import com.suishibeisong.flashcards.ui.navigation.BrowseRoute
+import com.suishibeisong.flashcards.ui.navigation.DataSettingsRoute
 import com.suishibeisong.flashcards.ui.navigation.DeckRoute
+import com.suishibeisong.flashcards.ui.navigation.GeneralSettingsRoute
+import com.suishibeisong.flashcards.ui.navigation.ReadingSettingsRoute
 import com.suishibeisong.flashcards.ui.navigation.QuickRoute
 import com.suishibeisong.flashcards.ui.navigation.ReviewRoute
 import com.suishibeisong.flashcards.ui.navigation.RootRoute
 import com.suishibeisong.flashcards.ui.pages.BrowseScreen
+import com.suishibeisong.flashcards.ui.pages.DataSettingsScreen
 import com.suishibeisong.flashcards.ui.pages.DeckScreen
+import com.suishibeisong.flashcards.ui.pages.GeneralSettingsScreen
+import com.suishibeisong.flashcards.ui.pages.ReadingSettingsScreen
 import com.suishibeisong.flashcards.ui.pages.HomeScreen
 import com.suishibeisong.flashcards.ui.pages.QuickScreen
 import com.suishibeisong.flashcards.ui.pages.ReviewScreen
@@ -45,6 +69,8 @@ import com.suishibeisong.flashcards.viewmodel.QuickViewModel
 import com.suishibeisong.flashcards.viewmodel.ReviewViewModel
 import com.suishibeisong.flashcards.viewmodel.SettingsViewModel
 import com.suishibeisong.flashcards.viewmodel.StatsViewModel
+import com.suishibeisong.flashcards.viewmodel.UpdateStatus
+import com.suishibeisong.flashcards.viewmodel.UpdateViewModel
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.launch
@@ -82,6 +108,41 @@ fun MdFlashcardsApp() {
 private fun AppContent(repo: FlashcardRepository) {
     val nav = rememberNavController()
     val snackbar = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val s = LocalStrings.current
+    val appState by repo.state.collectAsStateWithLifecycle()
+    val updateVm = appViewModel("update") { UpdateViewModel(repo) }
+    val update by updateVm.update.collectAsStateWithLifecycle()
+    val backEntry by nav.currentBackStackEntryAsState()
+    val atRoot = backEntry?.destination?.route?.contains("RootRoute") == true
+
+    LaunchedEffect(Unit) { updateVm.checkAtStartup() }
+
+    if (update.showDialog && update.status == UpdateStatus.AVAILABLE) {
+        AlertDialog(
+            onDismissRequest = { updateVm.dismissDialog() },
+            title = { Text("${s.updateAvailableTitle} · v${update.latestVersion}") },
+            text = {
+                Column(Modifier.height(340.dp).verticalScroll(rememberScrollState())) {
+                    MarkdownText(
+                        markdown = update.notes.ifBlank { s.updateNotesFallback },
+                        baseFontSize = 13f,
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    runCatching {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(update.releaseUrl)))
+                    }
+                    updateVm.dismissDialog()
+                }) { Text(s.updateNow) }
+            },
+            dismissButton = {
+                TextButton(onClick = { updateVm.dismissDialog() }) { Text(s.later) }
+            },
+        )
+    }
 
     NavHost(navController = nav, startDestination = RootRoute) {
         composable<RootRoute> {
@@ -115,7 +176,13 @@ private fun AppContent(repo: FlashcardRepository) {
                         }
                         else -> {
                             val vm = appViewModel("settings") { SettingsViewModel(repo) }
-                            SettingsScreen(vm = vm, snackbar = snackbar)
+                            SettingsScreen(
+                                vm = vm,
+                                updateVm = updateVm,
+                                onOpenGeneral = { nav.navigate(GeneralSettingsRoute) },
+                                onOpenReading = { nav.navigate(ReadingSettingsRoute) },
+                                onOpenData = { nav.navigate(DataSettingsRoute) },
+                            )
                         }
                     }
                 }
@@ -156,5 +223,21 @@ private fun AppContent(repo: FlashcardRepository) {
             val vm = appViewModel("browse-$deckId") { BrowseViewModel(repo, deckId) }
             BrowseScreen(vm = vm, snackbar = snackbar, onBack = { nav.popBackStack() })
         }
+        composable<GeneralSettingsRoute> {
+            val vm = appViewModel("settings-general") { SettingsViewModel(repo) }
+            GeneralSettingsScreen(vm = vm, onBack = { nav.popBackStack() })
+        }
+        composable<ReadingSettingsRoute> {
+            val vm = appViewModel("settings-reading") { SettingsViewModel(repo) }
+            ReadingSettingsScreen(vm = vm, onBack = { nav.popBackStack() })
+        }
+        composable<DataSettingsRoute> {
+            val vm = appViewModel("settings-data") { SettingsViewModel(repo) }
+            DataSettingsScreen(vm = vm, snackbar = snackbar, onBack = { nav.popBackStack() })
+        }
+    }
+
+    if (!appState.settings.enablePredictiveBack && !atRoot) {
+        BackHandler { nav.popBackStack() }
     }
 }

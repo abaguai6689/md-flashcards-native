@@ -16,6 +16,8 @@ data class DeckUiState(
     val stats: Map<String, CardStat> = emptyMap(),
     val known: Int = 0,
     val due: Int = 0,
+    val newCount: Int = 0,
+    val markedCount: Int = 0,
     val chapters: List<String> = emptyList(),
 )
 
@@ -23,11 +25,22 @@ class DeckViewModel(private val repo: FlashcardRepository, private val deckId: S
     val ui: StateFlow<DeckUiState> = repo.state.map { state ->
         val deck = state.decks.find { it.id == deckId }
         val chapters = deck?.cards?.map { ProgressRules.chapterOf(it) }?.distinct()?.sorted().orEmpty()
+        val cards = deck?.cards.orEmpty()
+        val newCount = cards.count {
+            val stat = state.stats[it.id]
+            stat == null || stat.reviews == 0
+        }
+        val markedCount = cards.count {
+            val stat = state.stats[it.id]
+            stat != null && stat.reviews > 0 && !ProgressRules.isKnown(stat)
+        }
         DeckUiState(
             deck = deck,
             stats = state.stats,
             known = deck?.let { ProgressRules.deckKnown(it, state.stats) } ?: 0,
             due = deck?.let { ProgressRules.deckDue(it, state.stats) } ?: 0,
+            newCount = newCount,
+            markedCount = markedCount,
             chapters = chapters,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DeckUiState())

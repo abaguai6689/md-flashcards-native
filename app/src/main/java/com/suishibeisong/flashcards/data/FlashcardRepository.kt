@@ -402,6 +402,10 @@ class FlashcardRepository(private val context: Context) {
     fun setTheme(theme: String) = update { it.copy(settings = it.settings.copy(theme = theme)) }
     fun setLang(lang: String) = update { it.copy(settings = it.settings.copy(lang = lang)) }
     fun setStatsView(view: String) = update { it.copy(settings = it.settings.copy(statsView = view)) }
+    fun setCheckUpdateAtStartup(value: Boolean) =
+        update { it.copy(settings = it.settings.copy(checkUpdateAtStartup = value)) }
+    fun setEnablePredictiveBack(value: Boolean) =
+        update { it.copy(settings = it.settings.copy(enablePredictiveBack = value)) }
     fun setReading(fs: String? = null, lh: Int? = null, cw: Int? = null) = update { s ->
         s.copy(settings = s.settings.copy(reading = s.settings.reading.copy(
             fs = fs ?: s.settings.reading.fs,
