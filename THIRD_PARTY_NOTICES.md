@@ -3,6 +3,14 @@
 This project contains an independent Kotlin/Compose implementation. The following
 projects were used as design/interaction references or runtime dependencies.
 
+## SharedNav
+
+- Project: https://github.com/Chiu-xaH/SharedNav
+- License: no license file was published in the upstream repository at the time of use.
+- Usage: runtime dependency (`navigation-android`) for shared-container page navigation,
+  back stack and predictive back. Used with the repository author's permission.
+- Version: 1.0.0-dev09300016.
+
 ## Haze
 
 - Project: https://github.com/chrisbanes/haze

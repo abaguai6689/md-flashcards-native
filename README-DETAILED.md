@@ -9,17 +9,17 @@
 
 | 层 | 选型 |
 |---|---|
-| 语言 | Kotlin 2.0.21 |
-| UI | Jetpack Compose（BOM 2024.12.01）+ Material 3 |
+| 语言 | Kotlin 2.2.20 |
+| UI | Jetpack Compose（BOM 2025.12.01，Compose 1.10.0）+ Material 3 1.4.0 |
 | 玻璃效果 | Haze 1.2.2（真实背景模糊，低版本回退 tint） |
-| 导航 | Navigation Compose 2.8.5，`@Serializable` 类型安全路由 |
-| 状态 | AndroidX ViewModel 2.8.7 + Kotlin Coroutines 1.9 + StateFlow |
-| 序列化 | kotlinx.serialization JSON |
+| 导航/动效 | SharedNav 1.0.0-dev09300016（SharedNavHost + SharedContainer） |
+| 状态 | AndroidX Lifecycle 2.10.0 + Kotlin Coroutines 1.10.2 + StateFlow |
+| 序列化 | kotlinx.serialization JSON 1.9.0 |
 | 持久化 | 应用私有 `filesDir/state.json` + `filesDir/images/` |
 | 文件选择 | Storage Access Framework（不需要存储权限） |
 | 网络 | `HttpURLConnection`，仅用于 GitHub Release 更新检查 |
-| 构建 | AGP 8.7.3 / Gradle 8.9 / JDK 17 / compileSdk 35 / minSdk 26 |
-| CI | GitHub Actions：单测 → assembleDebug → artifact / Release |
+| 构建 | AGP 8.9.3 / Gradle 8.11.1 / JDK 17 / compileSdk 36 / minSdk 26 |
+| CI | GitHub Actions：单测 → assembleRelease → artifact / Release |
 
 应用只有一个 Activity，没有 Fragment、XML 布局、WebView、Room、Retrofit、Hilt。
 
@@ -33,11 +33,12 @@
 │   MdFlashcardsTheme（动态色 / 阅读设置）                        │
 │   CompositionLocalProvider(LocalStrings)                       │
 │   AppContent                                                   │
-│     NavHost(RootRoute)                                         │
-│       HorizontalPager                                          │
+│     SharedNavHost(startDestination = RootDestination)          │
+│       RootDestination.Content → HorizontalPager                │
 │         0 HomeScreen    1 StatsScreen    2 SettingsScreen      │
 │         LiquidGlassNavBar（3 个 Tab）                           │
-│     NavHost 详情路由：Deck / Review / Quick / Browse            │
+│       SharedNav Destinations：Deck / DeckCards / Review /       │
+│         Quick / Browse / General / Reading / Data               │
 └───────────────────────────┬────────────────────────────────────┘
                             │ StateFlow + 事件
 ┌───────────────────────────▼────────────────────────────────────┐
@@ -96,10 +97,11 @@ app/src/main/java/com/fest/mdflashcards/
 │   ├── CardParser.kt               // Markdown → 卡片（拆卡规则实现）
 │   └── Scheduler.kt                // Leitner 三盒
 ├── ui/
-│   ├── App.kt                      // 主题、字符串、Pager、NavHost
+│   ├── App.kt                      // 主题、字符串、SharedNavHost、更新弹窗
+│   ├── Destinations.kt             // Root / Deck / DeckCards / Review / Quick / Browse / Settings
+│   ├── AppDeps.kt                  // Repository / UpdateVM / Snackbar 注入
 │   ├── ViewModelCompat.kt          // repository() / VmFactory / appViewModel
-│   ├── navigation/Routes.kt        // Root / Deck / Review / Quick / Browse
-│   ├── theme/Theme.kt, Motion.kt   // 动态色、形状、排版、阅读参数
+│   ├── theme/Theme.kt              // 动态色、形状、排版、阅读参数
 │   ├── i18n/Strings.kt             // 简中 / 繁中 / English
 │   ├── components/Common.kt        // 液态玻璃导航、Chip、确认框、空态
 │   ├── components/Markdown.kt      // Markdown 块解析 + AnnotatedString + 本地图片
@@ -248,11 +250,12 @@ data class AppState(
 
 ### 9.1 根容器
 
-`RootRoute` 内使用 `HorizontalPager(3)`：
+`RootDestination` 内使用 `HorizontalPager(3)`：
 
 - 0 首页、1 统计、2 设置；
 - 底部 `FloatingNavBar` 与 `pager.currentPage` 双向同步：点按 `animateScrollToPage`，滑动更新高亮；
-- 详情路由（Deck/Review/Quick/Browse）通过同一个 `NavHost` push，根容器离开组合，底栏自然隐藏；
+- 详情路由通过 SharedNav 的 `NavigationController.push()` 入栈，根容器离开组合，底栏自然隐藏；
+- 所有二级页面使用 `SharedContainer` 作为触发容器，目标 Destination 的 key 与源容器一致，展开/返回都从原按钮位置开始；
 - 返回根容器时 Pager 页码由 saveable 状态恢复。
 
 ### 9.2 液态玻璃底栏
@@ -319,7 +322,7 @@ data class AppState(
 - `SideEffect` 同步状态栏/导航栏图标明暗；
 - 三语言 `Strings.kt`（简中 / 繁中 / English）通过 `CompositionLocal` 提供，切换立即重组；
 - 阅读设置：字号 `fs`（0.92/1/1.12）、行距 `lh`（0.86/1/1.2）、内容宽度 `cw`（暂只存储，页面使用全宽）；
-- 形状：24/32dp 大圆角；动效：`GhostMotion` 贝塞尔与 spring。
+- 形状：24/32dp 大圆角；页面动效由 SharedNav 统一驱动。
 
 ---
 
@@ -392,24 +395,27 @@ data class AppState(
   - `tag_name` 与 `BuildConfig.VERSION_NAME` 做数字段比较；
   - 只有检测到更高版本且「启动时检查更新」开启时才弹窗。
 - 发布时通过 `.github/workflows/android.yml` 的 `body_path: RELEASE_NOTES.md` 把仓库根目录的 `RELEASE_NOTES.md` 写进 GitHub Release 正文；以后只改这个文件即可更新弹窗内容，不需要改 APK。
-- 「立即更新」打开对应 Release 页面；「暂不更新」仅关闭当次弹窗，下次启动仍会检查。
+- 「立即更新」直接打开 Release 中最新 `.apk` 资产的 `browser_download_url`；没有 APK 资产时才回退 Release 页面；
+- 「暂不更新」仅关闭当次弹窗，下次启动仍会检查。
 
 ## 17. 预测性返回
 
 - `AndroidManifest.xml` 开启 `android:enableOnBackInvokedCallback="true"`；
-- Navigation Compose 2.8.5 的 `NavHost` 在 Android 13+ 自动接入系统预测性返回；
-- 设置 → 通用中的「预测性返回」关闭时，在非根页面注册 `BackHandler` 立即返回，避免系统预览动画；
+- SharedNav 的 `DefaultBackHandler` 在 Android 13+ 接入系统预测性返回；
+- 设置 → 通用中的「预测性返回」关闭时，`NavigationController.enablePredictiveBack = false`，退回普通返回；
 - 系统开关 `Settings.Global.ENABLE_BACK_ANIMATION`（`enable_back_animation`）必须为 1，否则任何 App 都不会出现返回预览。通用页会检测该值并提示，App 无权修改系统设置；
 - 手动开启：开发者选项 → 预测性返回动画，或 `adb shell settings put global enable_back_animation 1`。
 
 ## 18. 页面与弹窗动效
 
-- 根节点用 `pointerInput(PointerEventPass.Initial)` 记录最近一次按下位置，换算成 `TransformOrigin`；
-- `NavHost` 的 `enterTransition` 使用 `scaleIn(transformOrigin = tapOrigin)`，让二级页面从按钮位置展开；
-- `popExitTransition` 缩回同一位置，`exit/popEnter` 使用淡出/淡入；
-- 所有 `AlertDialog` 替换为 `OriginAlertDialog`：`Dialog` 内的 `AnimatedVisibility + scaleIn(transformOrigin)`，从触发位置弹出；
-- 不引入 SharedNav 依赖，避免 Compose 版本耦合。
-- 笔记详情顶部四类数量可点击，进入独立的 `DeckCardsRoute` 分类页；卡片默认只显示题目，点击用 `animateContentSize + AnimatedVisibility` 展开答案，且同一时间只允许一张展开。
+- 页面导航已完全切换到 SharedNav：
+  - `SharedNavHost` 管理返回栈、共享容器、背景/前景效果与预测性返回；
+  - 触发卡片/按钮用 `NavTrigger`（内部 `SharedContainer`）包裹，key 与目标 `Destination.key` 一致；
+  - 页面从触发元素的真实位置展开，返回时缩回同一元素；不再使用 `NavHost` 的 `scaleIn`/`fadeIn` 交叉渐变，因此不会闪烁；
+  - 主要源容器：首页笔记卡/继续学习、笔记详情四个分类数字、学习/速记/浏览按钮、设置三个入口。
+- 弹窗仍使用 `OriginAlertDialog`：从最后一次触摸位置缩放弹出，避免中心弹出。
+- 笔记详情顶部四类数量可点击，进入独立的 `DeckCardsDestination` 分类页；卡片默认只显示题目，点击用 `animateContentSize + AnimatedVisibility` 展开答案，且同一时间只允许一张展开；点击高光已移除，避免展开时高光轮廓错位。
+- `DeckCardsDestination`、`DeckDestination` 等位于 `ui/Destinations.kt`，旧 `Routes.kt`/Navigation Compose 已删除。
 
 ## 19. 界面参考与许可
 

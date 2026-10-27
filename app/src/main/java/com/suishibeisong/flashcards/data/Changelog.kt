@@ -13,6 +13,18 @@ data class ChangelogEntry(
 object Changelog {
     val entries = listOf(
         ChangelogEntry(
+            version = "1.7.0",
+            date = "2026-10-27",
+            changes = listOf(
+                "升级 Compose 1.10 / Kotlin 2.2.20 / AGP 8.9.3 / Gradle 8.11.1 / compileSdk 36",
+                "正式接入 SharedNav：二级页面使用 SharedContainer 从触发卡片/按钮展开，替换自写的缩放过渡",
+                "接入 SharedNav 的返回栈与预测性返回；设置中的预测性返回开关继续生效",
+                "移除页面透明交叉渐变，解决二级页面闪烁和生硬感",
+                "分类页卡片移除与展开后尺寸不匹配的矩形高光，点击反馈不再出现错位高光",
+                "更新弹窗和设置「前往下载」直接打开 APK 资产链接",
+            ),
+        ),
+        ChangelogEntry(
             version = "1.6.1",
             date = "2026-10-27",
             changes = listOf(

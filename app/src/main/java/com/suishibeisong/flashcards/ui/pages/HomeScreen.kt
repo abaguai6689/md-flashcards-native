@@ -33,6 +33,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -96,8 +97,11 @@ import com.suishibeisong.flashcards.ui.components.ChipRow
 import com.suishibeisong.flashcards.ui.components.OriginAlertDialog
 import com.suishibeisong.flashcards.ui.components.ConfirmDialog
 import com.suishibeisong.flashcards.ui.components.EmptyState
+import com.suishibeisong.flashcards.ui.components.NavTrigger
 import com.suishibeisong.flashcards.ui.components.SectionHeader
 import com.suishibeisong.flashcards.ui.components.StatChip
+import com.suishibeisong.flashcards.ui.deckKey
+import com.suishibeisong.flashcards.ui.reviewKey
 import com.suishibeisong.flashcards.ui.i18n.LocalStrings
 import com.suishibeisong.flashcards.ui.i18n.fmt
 import com.suishibeisong.flashcards.viewmodel.DeckItem
@@ -180,8 +184,13 @@ fun HomeScreen(
             val session = state.session
             if (session != null) {
                 item {
-                    Surface(
+                    NavTrigger(
+                        key = reviewKey(session.deckIds.firstOrNull().orEmpty(), resume = true),
                         shape = RoundedCornerShape(22.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                    Surface(
+                        shape = RectangleShape,
                         color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.75f),
                         modifier = Modifier.fillMaxWidth().clickable { onReview() },
                     ) {
@@ -196,6 +205,7 @@ fun HomeScreen(
                             }
                             Icon(Icons.Outlined.Refresh, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer)
                         }
+                    }
                     }
                 }
             }
@@ -385,12 +395,16 @@ private fun DeckCard(
     val s = LocalStrings.current
     var menu by remember { mutableStateOf(false) }
     val fraction = if (item.cards == 0) 0f else item.known.toFloat() / item.cards
-    Surface(
+    NavTrigger(
+        key = deckKey(item.deck.id),
         shape = RoundedCornerShape(24.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+    Surface(
+        shape = RectangleShape,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
             .combinedClickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -445,6 +459,7 @@ private fun DeckCard(
                 trackColor = MaterialTheme.colorScheme.surfaceVariant,
             )
         }
+    }
     }
 }
 

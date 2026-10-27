@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -129,14 +130,19 @@ private fun DeckCardAnswerRow(
     onClick: () -> Unit,
 ) {
     val s = LocalStrings.current
+    val shape = RoundedCornerShape(16.dp)
     Surface(
-        shape = RoundedCornerShape(16.dp),
+        shape = shape,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = Modifier
             .fillMaxWidth()
             .animateContentSize()
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick),
+            .clip(shape)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick,
+            ),
     ) {
         Column(Modifier.padding(16.dp)) {
             Text(

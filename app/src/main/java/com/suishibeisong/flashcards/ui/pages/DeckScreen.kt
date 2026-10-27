@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -63,8 +64,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.suishibeisong.flashcards.ui.components.ConfirmDialog
+import com.suishibeisong.flashcards.ui.components.NavTrigger
 import com.suishibeisong.flashcards.ui.components.OriginAlertDialog
 import com.suishibeisong.flashcards.ui.components.SectionHeader
+import com.suishibeisong.flashcards.ui.browseKey
+import com.suishibeisong.flashcards.ui.deckCardsKey
+import com.suishibeisong.flashcards.ui.quickKey
+import com.suishibeisong.flashcards.ui.reviewKey
 import com.suishibeisong.flashcards.ui.i18n.LocalStrings
 import com.suishibeisong.flashcards.ui.i18n.fmt
 import com.suishibeisong.flashcards.viewmodel.DeckViewModel
@@ -74,6 +80,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun DeckScreen(
     vm: DeckViewModel,
+    deckId: String,
     snackbar: SnackbarHostState,
     onBack: () -> Unit,
     onStartReview: () -> Unit,
@@ -154,10 +161,10 @@ fun DeckScreen(
                     Text(deck.title.ifBlank { deck.name }, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(8.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Metric(deck.cards.size.toString(), s.cardsShort) { onOpenCategory("all") }
-                        Metric(ui.known.toString(), s.stateKnown) { onOpenCategory("known") }
-                        Metric(ui.newCount.toString(), s.stateNew) { onOpenCategory("new") }
-                        Metric(ui.markedCount.toString(), s.stateMarked) { onOpenCategory("marked") }
+                        Metric(deck.cards.size.toString(), s.cardsShort, deckCardsKey(deckId, "all")) { onOpenCategory("all") }
+                        Metric(ui.known.toString(), s.stateKnown, deckCardsKey(deckId, "known")) { onOpenCategory("known") }
+                        Metric(ui.newCount.toString(), s.stateNew, deckCardsKey(deckId, "new")) { onOpenCategory("new") }
+                        Metric(ui.markedCount.toString(), s.stateMarked, deckCardsKey(deckId, "marked")) { onOpenCategory("marked") }
                     }
                     Spacer(Modifier.height(14.dp))
                     LinearProgressIndicator(
@@ -171,9 +178,9 @@ fun DeckScreen(
 
             Spacer(Modifier.height(14.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                QuickAction(Icons.Outlined.Shuffle, s.deckReview, Modifier.weight(1f), onStartReview)
-                QuickAction(Icons.Outlined.MenuBook, s.deckQuick, Modifier.weight(1f), onQuick)
-                QuickAction(Icons.Outlined.ImportContacts, s.deckBrowse, Modifier.weight(1f), onBrowse)
+                QuickAction(Icons.Outlined.Shuffle, s.deckReview, null, Modifier.weight(1f), onStartReview)
+                QuickAction(Icons.Outlined.MenuBook, s.deckQuick, quickKey(deckId), Modifier.weight(1f), onQuick)
+                QuickAction(Icons.Outlined.ImportContacts, s.deckBrowse, browseKey(deckId), Modifier.weight(1f), onBrowse)
             }
 
             Spacer(Modifier.height(24.dp))
@@ -241,14 +248,16 @@ fun DeckScreen(
             }
 
             Spacer(Modifier.height(18.dp))
+            NavTrigger(reviewKey(deckId), RoundedCornerShape(16.dp), Modifier.fillMaxWidth()) {
             Button(
                 onClick = {
                     if (vm.startReview(count, weak, chapter, statusFilter)) onStartReview()
                     else scope.launch { snackbar.showSnackbar(s.reviewEmpty) }
                 },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
-                shape = RoundedCornerShape(16.dp),
+                shape = RectangleShape,
             ) { Text(s.startReview, fontWeight = FontWeight.SemiBold) }
+            }
             Spacer(Modifier.height(30.dp))
         }
     }
@@ -299,13 +308,14 @@ fun DeckScreen(
 private fun Metric(
     value: String,
     label: String,
+    sharedKey: String,
     onClick: () -> Unit,
 ) {
+    NavTrigger(sharedKey, RoundedCornerShape(12.dp)) {
     Surface(
-        shape = RoundedCornerShape(12.dp),
+        shape = RectangleShape,
         color = androidx.compose.ui.graphics.Color.Transparent,
         modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -320,19 +330,22 @@ private fun Metric(
             Text(label, fontSize = 10.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+    }
 }
 
 @Composable
 private fun QuickAction(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
+    sharedKey: String?,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
+    val content: @Composable () -> Unit = {
     Surface(
-        shape = RoundedCornerShape(18.dp),
+        shape = RectangleShape,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        modifier = modifier.clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
     ) {
         Column(Modifier.padding(vertical = 14.dp, horizontal = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
@@ -340,4 +353,7 @@ private fun QuickAction(
             Text(label, fontSize = 11.sp, maxLines = 2, fontWeight = FontWeight.Medium)
         }
     }
+    }
+    if (sharedKey != null) NavTrigger(sharedKey, RoundedCornerShape(18.dp), modifier) { content() }
+    else Box(modifier = modifier) { content() }
 }

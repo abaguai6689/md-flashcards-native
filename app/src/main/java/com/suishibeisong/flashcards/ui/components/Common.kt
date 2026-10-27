@@ -408,12 +408,13 @@ fun ActionRow(
     title: String,
     subtitle: String? = null,
     trailing: (@Composable () -> Unit)? = null,
+    shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(16.dp),
     onClick: () -> Unit,
 ) {
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(shape)
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,

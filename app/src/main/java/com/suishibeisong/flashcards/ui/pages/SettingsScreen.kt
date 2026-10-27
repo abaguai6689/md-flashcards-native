@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
@@ -50,7 +51,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.suishibeisong.flashcards.BuildConfig
 import com.suishibeisong.flashcards.data.Changelog
 import com.suishibeisong.flashcards.data.UpdateChecker
+import com.suishibeisong.flashcards.ui.GeneralSettingsDestination
+import com.suishibeisong.flashcards.ui.DataSettingsDestination
+import com.suishibeisong.flashcards.ui.ReadingSettingsDestination
 import com.suishibeisong.flashcards.ui.components.ActionRow
+import com.suishibeisong.flashcards.ui.components.NavTrigger
 import com.suishibeisong.flashcards.ui.components.OriginAlertDialog
 import com.suishibeisong.flashcards.ui.components.SectionHeader
 import com.suishibeisong.flashcards.ui.components.ThinDivider
@@ -95,11 +100,17 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(Modifier.padding(vertical = 6.dp)) {
-                    ActionRow(Icons.Outlined.Tune, s.settingsGeneral, s.settingsGeneralDesc) { onOpenGeneral() }
+                    NavTrigger(GeneralSettingsDestination.key, RoundedCornerShape(14.dp)) {
+                        ActionRow(Icons.Outlined.Tune, s.settingsGeneral, s.settingsGeneralDesc, shape = RectangleShape) { onOpenGeneral() }
+                    }
                     ThinDivider()
-                    ActionRow(Icons.Outlined.MenuBook, s.settingsReading, s.settingsReadingDesc) { onOpenReading() }
+                    NavTrigger(ReadingSettingsDestination.key, RoundedCornerShape(14.dp)) {
+                        ActionRow(Icons.Outlined.MenuBook, s.settingsReading, s.settingsReadingDesc, shape = RectangleShape) { onOpenReading() }
+                    }
                     ThinDivider()
-                    ActionRow(Icons.Outlined.Storage, s.settingsData, s.settingsDataDesc) { onOpenData() }
+                    NavTrigger(DataSettingsDestination.key, RoundedCornerShape(14.dp)) {
+                        ActionRow(Icons.Outlined.Storage, s.settingsData, s.settingsDataDesc, shape = RectangleShape) { onOpenData() }
+                    }
                 }
             }
 
