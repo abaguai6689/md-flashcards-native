@@ -12,7 +12,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Upload
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -27,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.suishibeisong.flashcards.ui.components.ActionRow
+import com.suishibeisong.flashcards.ui.components.OriginAlertDialog
 import com.suishibeisong.flashcards.ui.components.ConfirmDialog
 import com.suishibeisong.flashcards.ui.i18n.LocalStrings
 import com.suishibeisong.flashcards.viewmodel.SettingsViewModel
@@ -86,7 +86,7 @@ fun DataSettingsScreen(
     }
 
     pendingImport?.let { uri ->
-        AlertDialog(
+        OriginAlertDialog(
             onDismissRequest = { pendingImport = null },
             title = { Text(s.importBackup) },
             text = { Text(s.mergeHint) },

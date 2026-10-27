@@ -74,6 +74,7 @@ data class Strings(
     val predictiveBackSystemOff: String = "系统预测性返回未开启",
     val predictiveBackSystemOffDesc: String = "系统开关 enable_back_animation 当前为 0。请在开发者选项中开启「预测性返回动画」，或执行 adb shell settings put global enable_back_animation 1 后重试。",
     val openDeveloperOptions: String = "打开开发者选项",
+    val noCardsInCategory: String = "这个分类下还没有卡片",
 )
 
 val ZhHans = Strings(

@@ -4,6 +4,12 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,7 +20,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -22,11 +27,19 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -38,6 +51,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.suishibeisong.flashcards.data.FlashcardRepository
 import com.suishibeisong.flashcards.ui.components.FloatingNavBar
+import com.suishibeisong.flashcards.ui.components.OriginAlertDialog
+import com.suishibeisong.flashcards.ui.components.LocalTapOrigin
 import com.suishibeisong.flashcards.ui.components.MarkdownText
 import com.suishibeisong.flashcards.ui.components.MainTab
 import com.suishibeisong.flashcards.ui.i18n.LocalStrings
@@ -110,6 +125,8 @@ private fun AppContent(repo: FlashcardRepository) {
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
     val s = LocalStrings.current
+    var rootSize by remember { mutableStateOf(IntSize.Zero) }
+    val tapOrigin = remember { mutableStateOf(TransformOrigin.Center) }
     val appState by repo.state.collectAsStateWithLifecycle()
     val updateVm = appViewModel("update") { UpdateViewModel(repo) }
     val update by updateVm.update.collectAsStateWithLifecycle()
@@ -118,8 +135,30 @@ private fun AppContent(repo: FlashcardRepository) {
 
     LaunchedEffect(Unit) { updateVm.checkAtStartup() }
 
+    Box(
+        Modifier
+            .fillMaxSize()
+            .onSizeChanged { rootSize = it }
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        if (event.type == PointerEventType.Press) {
+                            val p = event.changes.firstOrNull()?.position ?: continue
+                            if (rootSize.width > 0 && rootSize.height > 0) {
+                                tapOrigin.value = TransformOrigin(
+                                    pivotFractionX = (p.x / rootSize.width).coerceIn(0f, 1f),
+                                    pivotFractionY = (p.y / rootSize.height).coerceIn(0f, 1f),
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+    ) {
+        CompositionLocalProvider(LocalTapOrigin provides tapOrigin.value) {
     if (update.showDialog && update.status == UpdateStatus.AVAILABLE) {
-        AlertDialog(
+        OriginAlertDialog(
             onDismissRequest = { updateVm.dismissDialog() },
             title = { Text("${s.updateAvailableTitle} · v${update.latestVersion}") },
             text = {
@@ -144,7 +183,26 @@ private fun AppContent(repo: FlashcardRepository) {
         )
     }
 
-    NavHost(navController = nav, startDestination = RootRoute) {
+    NavHost(
+        navController = nav,
+        startDestination = RootRoute,
+        enterTransition = {
+            scaleIn(
+                initialScale = 0.84f,
+                transformOrigin = tapOrigin.value,
+                animationSpec = tween(300, easing = FastOutSlowInEasing),
+            ) + fadeIn(tween(200))
+        },
+        exitTransition = { fadeOut(tween(160)) },
+        popEnterTransition = { fadeIn(tween(220)) },
+        popExitTransition = {
+            scaleOut(
+                targetScale = 0.84f,
+                transformOrigin = tapOrigin.value,
+                animationSpec = tween(260, easing = FastOutSlowInEasing),
+            ) + fadeOut(tween(200))
+        },
+    ) {
         composable<RootRoute> {
             val pager = rememberPagerState(pageCount = { 3 })
             val hazeState = remember { HazeState() }
@@ -239,5 +297,7 @@ private fun AppContent(repo: FlashcardRepository) {
 
     if (!appState.settings.enablePredictiveBack && !atRoot) {
         BackHandler { nav.popBackStack() }
+    }
+        }
     }
 }

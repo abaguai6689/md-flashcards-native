@@ -25,7 +25,6 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material.icons.outlined.Tune
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -52,6 +51,7 @@ import com.suishibeisong.flashcards.BuildConfig
 import com.suishibeisong.flashcards.data.Changelog
 import com.suishibeisong.flashcards.data.UpdateChecker
 import com.suishibeisong.flashcards.ui.components.ActionRow
+import com.suishibeisong.flashcards.ui.components.OriginAlertDialog
 import com.suishibeisong.flashcards.ui.components.SectionHeader
 import com.suishibeisong.flashcards.ui.components.ThinDivider
 import com.suishibeisong.flashcards.ui.i18n.LocalStrings
@@ -208,7 +208,7 @@ fun SettingsScreen(
     }
 
     if (changelogOpen) {
-        AlertDialog(
+        OriginAlertDialog(
             onDismissRequest = { changelogOpen = false },
             title = { Text(s.changelog) },
             text = {

@@ -402,7 +402,16 @@ data class AppState(
 - 系统开关 `Settings.Global.ENABLE_BACK_ANIMATION`（`enable_back_animation`）必须为 1，否则任何 App 都不会出现返回预览。通用页会检测该值并提示，App 无权修改系统设置；
 - 手动开启：开发者选项 → 预测性返回动画，或 `adb shell settings put global enable_back_animation 1`。
 
-## 18. 界面参考与许可
+## 18. 页面与弹窗动效
+
+- 根节点用 `pointerInput(PointerEventPass.Initial)` 记录最近一次按下位置，换算成 `TransformOrigin`；
+- `NavHost` 的 `enterTransition` 使用 `scaleIn(transformOrigin = tapOrigin)`，让二级页面从按钮位置展开；
+- `popExitTransition` 缩回同一位置，`exit/popEnter` 使用淡出/淡入；
+- 所有 `AlertDialog` 替换为 `OriginAlertDialog`：`Dialog` 内的 `AnimatedVisibility + scaleIn(transformOrigin)`，从触发位置弹出；
+- 不引入 SharedNav 依赖，避免 Compose 版本耦合。
+- 笔记详情顶部四类数量可点击，弹出 `OriginAlertDialog` 卡片列表；卡片用 `animateContentSize + AnimatedVisibility` 展开答案。
+
+## 19. 界面参考与许可
 
 - 液态玻璃底栏的视觉与交互参考：
   - [Kyant0/AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass)（Apache-2.0）
@@ -412,7 +421,7 @@ data class AppState(
 - 以上均为设计/交互参考；本项目代码为 Kotlin/Compose 独立实现。
 - 第三方许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
-## 19. 签名与覆盖安装
+## 20. 签名与覆盖安装
 
 - 固定签名文件：`keystore/md-flashcards.jks`，alias `mdflashcards`；
 - 包名：`com.suishibeisong.flashcards`；应用名：闪卡背诵；仓库：`abaguai6689/suishibeisong`；

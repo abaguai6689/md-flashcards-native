@@ -21,7 +21,6 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,6 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.suishibeisong.flashcards.data.Card
 import com.suishibeisong.flashcards.data.ProgressRules
 import com.suishibeisong.flashcards.ui.components.ConfirmDialog
+import com.suishibeisong.flashcards.ui.components.OriginAlertDialog
 import com.suishibeisong.flashcards.ui.components.MarkdownParser
 import com.suishibeisong.flashcards.ui.i18n.LocalStrings
 import com.suishibeisong.flashcards.viewmodel.BrowseViewModel
@@ -209,7 +209,7 @@ private fun CardEditDialog(card: Card, onDismiss: () -> Unit, onSave: (Card) -> 
     var title by remember(card.id) { mutableStateOf(card.title) }
     var question by remember(card.id) { mutableStateOf(card.question) }
     var answer by remember(card.id) { mutableStateOf(card.answer) }
-    AlertDialog(
+    OriginAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(s.cardEdit) },
         text = {

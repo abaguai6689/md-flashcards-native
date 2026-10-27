@@ -2,6 +2,7 @@ package com.suishibeisong.flashcards.ui.pages
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,12 +12,22 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.CheckCircle
@@ -34,6 +45,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -43,6 +55,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -58,8 +71,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.suishibeisong.flashcards.data.Card
+import com.suishibeisong.flashcards.data.ProgressRules
+import com.suishibeisong.flashcards.ui.components.MarkdownText
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.suishibeisong.flashcards.ui.components.ConfirmDialog
+import com.suishibeisong.flashcards.ui.components.OriginAlertDialog
 import com.suishibeisong.flashcards.ui.components.SectionHeader
 import com.suishibeisong.flashcards.ui.i18n.LocalStrings
 import com.suishibeisong.flashcards.ui.i18n.fmt
@@ -90,6 +107,7 @@ fun DeckScreen(
     var chapterMenu by remember { mutableStateOf(false) }
     var statusFilter by remember { mutableStateOf("all") }
     var statusMenu by remember { mutableStateOf(false) }
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
 
     val deck = ui.deck
     Scaffold(
@@ -149,10 +167,10 @@ fun DeckScreen(
                     Text(deck.title.ifBlank { deck.name }, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(8.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Metric(deck.cards.size.toString(), s.cardsShort)
-                        Metric(ui.known.toString(), s.stateKnown)
-                        Metric(ui.newCount.toString(), s.stateNew)
-                        Metric(ui.markedCount.toString(), s.stateMarked)
+                        Metric(deck.cards.size.toString(), s.cardsShort, selectedCategory == "all") { selectedCategory = "all" }
+                        Metric(ui.known.toString(), s.stateKnown, selectedCategory == "known") { selectedCategory = "known" }
+                        Metric(ui.newCount.toString(), s.stateNew, selectedCategory == "new") { selectedCategory = "new" }
+                        Metric(ui.markedCount.toString(), s.stateMarked, selectedCategory == "marked") { selectedCategory = "marked" }
                     }
                     Spacer(Modifier.height(14.dp))
                     LinearProgressIndicator(
@@ -249,7 +267,7 @@ fun DeckScreen(
     }
 
     if (renameOpen) {
-        androidx.compose.material3.AlertDialog(
+        OriginAlertDialog(
             onDismissRequest = { renameOpen = false },
             title = { Text(s.deckRename) },
             text = {
@@ -288,13 +306,126 @@ fun DeckScreen(
             onDismiss = { resetOpen = false },
         )
     }
+
+    selectedCategory?.let { category ->
+        val statMap = ui.stats
+        val cards = (ui.deck?.cards.orEmpty()).filter { card ->
+            val stat = statMap[card.id]
+            when (category) {
+                "known" -> stat != null && ProgressRules.isKnown(stat)
+                "new" -> stat == null || stat.reviews == 0
+                "marked" -> stat != null && stat.reviews > 0 && !ProgressRules.isKnown(stat)
+                else -> true
+            }
+        }
+        val label = when (category) {
+            "known" -> s.stateKnown
+            "new" -> s.stateNew
+            "marked" -> s.stateMarked
+            else -> s.cardsShort
+        }
+        OriginAlertDialog(
+            onDismissRequest = { selectedCategory = null },
+            title = { Text("$label · ${cards.size}") },
+            text = {
+                if (cards.isEmpty()) {
+                    Box(Modifier.fillMaxWidth().height(120.dp), contentAlignment = Alignment.Center) {
+                        Text(s.noCardsInCategory, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                } else {
+                    LazyColumn(
+                        Modifier.fillMaxWidth().heightIn(max = 430.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        items(cards, key = { it.id }) { card ->
+                            CategoryCardRow(card)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { selectedCategory = null }) { Text(s.close) }
+            },
+        )
+    }
 }
 
 @Composable
-private fun Metric(value: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Text(label, fontSize = 10.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun CategoryCardRow(card: Card) {
+    val s = LocalStrings.current
+    var expanded by remember(card.id) { mutableStateOf(false) }
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+            ) { expanded = !expanded },
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Text(
+                card.question.ifBlank { card.title },
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp,
+            )
+            AnimatedVisibility(
+                visible = expanded,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut(),
+            ) {
+                Column(Modifier.padding(top = 10.dp)) {
+                    HorizontalDivider()
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        s.answerLabel,
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    MarkdownText(
+                        markdown = card.answer,
+                        baseFontSize = 14f,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun Metric(
+    value: String,
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+        else androidx.compose.ui.graphics.Color.Transparent,
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick,
+            ),
+    ) {
+        Column(
+            Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(
+                label,
+                fontSize = 10.5.sp,
+                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

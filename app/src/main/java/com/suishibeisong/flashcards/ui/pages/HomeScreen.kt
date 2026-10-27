@@ -47,7 +47,6 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Sort
 import androidx.compose.material.icons.outlined.UploadFile
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -94,6 +93,7 @@ import com.suishibeisong.flashcards.data.SampleMarkdown
 import com.suishibeisong.flashcards.data.FlashcardRepository
 import com.suishibeisong.flashcards.domain.ParseOptions
 import com.suishibeisong.flashcards.ui.components.ChipRow
+import com.suishibeisong.flashcards.ui.components.OriginAlertDialog
 import com.suishibeisong.flashcards.ui.components.ConfirmDialog
 import com.suishibeisong.flashcards.ui.components.EmptyState
 import com.suishibeisong.flashcards.ui.components.SectionHeader
@@ -293,7 +293,7 @@ fun HomeScreen(
     }
 
     renameDeck?.let { deck ->
-        AlertDialog(
+        OriginAlertDialog(
             onDismissRequest = { renameDeck = null },
             title = { Text(s.deckRename) },
             text = {
@@ -345,7 +345,7 @@ private fun DeckEditDialog(
 ) {
     val s = LocalStrings.current
     var name by remember(deck.id) { mutableStateOf(deck.name) }
-    AlertDialog(
+    OriginAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(s.editDeck) },
         text = {

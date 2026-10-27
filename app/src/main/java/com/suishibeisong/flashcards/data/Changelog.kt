@@ -13,6 +13,17 @@ data class ChangelogEntry(
 object Changelog {
     val entries = listOf(
         ChangelogEntry(
+            version = "1.6.0",
+            date = "2026-10-26",
+            changes = listOf(
+                "二级页面改为从点击位置缩放入场，返回时缩回触发位置；设置子页、笔记详情、学习、速记、浏览统一生效",
+                "所有弹窗改为从触发按钮/菜单项的位置缩放弹出，不再从屏幕中心出现",
+                "笔记详情顶部四类数量可点击，弹出该分类的卡片列表",
+                "分类列表默认只显示题目；点击题目卡片，卡片下边界平滑展开答案",
+                "参考 SharedNav 的容器共享/普通动效思路，保持轻量、无额外依赖",
+            ),
+        ),
+        ChangelogEntry(
             version = "1.5.1",
             date = "2026-10-26",
             changes = listOf(
