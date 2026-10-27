@@ -110,6 +110,14 @@ object ProgressRules {
 
     fun isKnown(stat: CardStat?): Boolean = stat?.status == "known"
 
+    /** Category used by the deck header list: all / known / new / marked. */
+    fun matchesCategory(stat: CardStat?, category: String): Boolean = when (category) {
+        "known" -> isKnown(stat)
+        "new" -> stat == null || stat.reviews == 0
+        "marked" -> stat != null && stat.reviews > 0 && !isKnown(stat)
+        else -> true
+    }
+
     fun isWeak(stat: CardStat?): Boolean {
         if (stat == null || stat.reviews <= 0) return false
         if (stat.badCount > 0) return true

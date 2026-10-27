@@ -6,8 +6,8 @@ import androidx.activity.compose.BackHandler
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Box
@@ -59,6 +59,7 @@ import com.suishibeisong.flashcards.ui.i18n.LocalStrings
 import com.suishibeisong.flashcards.ui.i18n.stringsFor
 import com.suishibeisong.flashcards.ui.navigation.BrowseRoute
 import com.suishibeisong.flashcards.ui.navigation.DataSettingsRoute
+import com.suishibeisong.flashcards.ui.navigation.DeckCardsRoute
 import com.suishibeisong.flashcards.ui.navigation.DeckRoute
 import com.suishibeisong.flashcards.ui.navigation.GeneralSettingsRoute
 import com.suishibeisong.flashcards.ui.navigation.ReadingSettingsRoute
@@ -67,6 +68,7 @@ import com.suishibeisong.flashcards.ui.navigation.ReviewRoute
 import com.suishibeisong.flashcards.ui.navigation.RootRoute
 import com.suishibeisong.flashcards.ui.pages.BrowseScreen
 import com.suishibeisong.flashcards.ui.pages.DataSettingsScreen
+import com.suishibeisong.flashcards.ui.pages.DeckCardsScreen
 import com.suishibeisong.flashcards.ui.pages.DeckScreen
 import com.suishibeisong.flashcards.ui.pages.GeneralSettingsScreen
 import com.suishibeisong.flashcards.ui.pages.ReadingSettingsScreen
@@ -172,7 +174,7 @@ private fun AppContent(repo: FlashcardRepository) {
             confirmButton = {
                 TextButton(onClick = {
                     runCatching {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(update.releaseUrl)))
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(update.apkUrl.ifBlank { update.releaseUrl })))
                     }
                     updateVm.dismissDialog()
                 }) { Text(s.updateNow) }
@@ -188,19 +190,19 @@ private fun AppContent(repo: FlashcardRepository) {
         startDestination = RootRoute,
         enterTransition = {
             scaleIn(
-                initialScale = 0.84f,
+                initialScale = 0.86f,
                 transformOrigin = tapOrigin.value,
-                animationSpec = tween(300, easing = FastOutSlowInEasing),
-            ) + fadeIn(tween(200))
+                animationSpec = tween(320, easing = FastOutSlowInEasing),
+            )
         },
-        exitTransition = { fadeOut(tween(160)) },
-        popEnterTransition = { fadeIn(tween(220)) },
+        exitTransition = { ExitTransition.None },
+        popEnterTransition = { EnterTransition.None },
         popExitTransition = {
             scaleOut(
-                targetScale = 0.84f,
+                targetScale = 0.86f,
                 transformOrigin = tapOrigin.value,
-                animationSpec = tween(260, easing = FastOutSlowInEasing),
-            ) + fadeOut(tween(200))
+                animationSpec = tween(280, easing = FastOutSlowInEasing),
+            )
         },
     ) {
         composable<RootRoute> {
@@ -264,7 +266,13 @@ private fun AppContent(repo: FlashcardRepository) {
                 onStartReview = { nav.navigate(ReviewRoute(deckId)) },
                 onQuick = { nav.navigate(QuickRoute(deckId)) },
                 onBrowse = { nav.navigate(BrowseRoute(deckId)) },
+                onOpenCategory = { category -> nav.navigate(DeckCardsRoute(deckId, category)) },
             )
+        }
+        composable<DeckCardsRoute> { entry ->
+            val route = entry.toRoute<DeckCardsRoute>()
+            val vm = appViewModel("deck-cards-${route.deckId}") { DeckViewModel(repo, route.deckId) }
+            DeckCardsScreen(vm = vm, category = route.category, onBack = { nav.popBackStack() })
         }
         composable<ReviewRoute> { entry ->
             val deckId = entry.toRoute<ReviewRoute>().deckId

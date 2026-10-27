@@ -13,6 +13,16 @@ data class ChangelogEntry(
 object Changelog {
     val entries = listOf(
         ChangelogEntry(
+            version = "1.6.1",
+            date = "2026-10-27",
+            changes = listOf(
+                "修复二级页面缩放进入时的闪烁：去掉页面透明度交叉渐变，上一页保持静止，新页从点击位置缩放覆盖",
+                "笔记详情分类数量改为进入独立分类页，不再用弹窗显示",
+                "分类页同一时间只展开一张卡片的答案，点新卡自动收起旧卡",
+                "更新弹窗和设置页「前往下载」直接打开最新 APK 资产下载链接，不再跳 Release 页面",
+            ),
+        ),
+        ChangelogEntry(
             version = "1.6.0",
             date = "2026-10-26",
             changes = listOf(

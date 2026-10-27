@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable data object HomeRoute
 @Serializable data class DeckRoute(val deckId: String)
+@Serializable data class DeckCardsRoute(val deckId: String, val category: String)
 @Serializable data class ReviewRoute(val deckId: String, val resume: Boolean = false)
 @Serializable data class QuickRoute(val deckId: String)
 @Serializable data class BrowseRoute(val deckId: String)

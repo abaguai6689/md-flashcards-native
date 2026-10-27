@@ -3,7 +3,6 @@ package com.suishibeisong.flashcards.ui.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,7 +60,7 @@ fun OriginAlertDialog(
                     initialScale = 0.78f,
                     transformOrigin = origin,
                     animationSpec = tween(280, easing = FastOutSlowInEasing),
-                ) + fadeIn(tween(180)),
+                ),
             ) {
                 Surface(
                     modifier = modifier.fillMaxWidth().widthIn(max = 560.dp),

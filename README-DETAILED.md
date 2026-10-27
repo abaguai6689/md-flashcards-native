@@ -409,7 +409,7 @@ data class AppState(
 - `popExitTransition` 缩回同一位置，`exit/popEnter` 使用淡出/淡入；
 - 所有 `AlertDialog` 替换为 `OriginAlertDialog`：`Dialog` 内的 `AnimatedVisibility + scaleIn(transformOrigin)`，从触发位置弹出；
 - 不引入 SharedNav 依赖，避免 Compose 版本耦合。
-- 笔记详情顶部四类数量可点击，弹出 `OriginAlertDialog` 卡片列表；卡片用 `animateContentSize + AnimatedVisibility` 展开答案。
+- 笔记详情顶部四类数量可点击，进入独立的 `DeckCardsRoute` 分类页；卡片默认只显示题目，点击用 `animateContentSize + AnimatedVisibility` 展开答案，且同一时间只允许一张展开。
 
 ## 19. 界面参考与许可
 

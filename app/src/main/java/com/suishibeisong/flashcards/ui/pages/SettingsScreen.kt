@@ -164,7 +164,7 @@ fun SettingsScreen(
                         if (update.status == UpdateStatus.AVAILABLE) {
                             TextButton(onClick = {
                                 runCatching {
-                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(update.releaseUrl)))
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(update.apkUrl.ifBlank { update.releaseUrl })))
                                 }
                             }) { Text(s.goDownload) }
                         } else {

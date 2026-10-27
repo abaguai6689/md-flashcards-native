@@ -17,6 +17,7 @@ data class UpdateUiState(
     val currentVersion: String = BuildConfig.VERSION_NAME,
     val latestVersion: String = "",
     val releaseUrl: String = "",
+    val apkUrl: String = "",
     val notes: String = "",
     val error: String = "",
     val showDialog: Boolean = false,
@@ -45,6 +46,7 @@ class UpdateViewModel(private val repo: FlashcardRepository) : ViewModel() {
                         currentVersion = BuildConfig.VERSION_NAME,
                         latestVersion = info.latestVersion,
                         releaseUrl = info.releaseUrl,
+                        apkUrl = info.apkUrl,
                         notes = info.notes,
                         showDialog = newer && showDialog,
                     )

@@ -9,6 +9,7 @@ import java.net.URL
 data class UpdateInfo(
     val latestVersion: String,
     val releaseUrl: String,
+    val apkUrl: String,
     val notes: String,
     val publishedAt: String,
 )
@@ -33,9 +34,21 @@ object UpdateChecker {
                 val json = JSONObject(body)
                 val tag = json.optString("tag_name").ifBlank { json.optString("name") }
                 if (tag.isBlank()) error("No release tag")
+                var apkUrl = ""
+                json.optJSONArray("assets")?.let { assets ->
+                    for (i in 0 until assets.length()) {
+                        val asset = assets.optJSONObject(i) ?: continue
+                        val name = asset.optString("name")
+                        if (name.endsWith(".apk", ignoreCase = true)) {
+                            apkUrl = asset.optString("browser_download_url")
+                            if (apkUrl.isNotBlank()) break
+                        }
+                    }
+                }
                 UpdateInfo(
                     latestVersion = tag.removePrefix("v").removePrefix("V"),
                     releaseUrl = json.optString("html_url").ifBlank { "$REPO_URL/releases" },
+                    apkUrl = apkUrl,
                     notes = json.optString("body"),
                     publishedAt = json.optString("published_at"),
                 )
