@@ -13,6 +13,15 @@ data class ChangelogEntry(
 object Changelog {
     val entries = listOf(
         ChangelogEntry(
+            version = "1.8.1",
+            date = "2026-10-28",
+            changes = listOf(
+                "示例模板重写：每种导入格式前都加入详细说明注释，覆盖二级/三级标题、Q/A、分隔线、段落、表格、列表、代码块、图片、挖空、标签和 ZIP",
+                "导入解析会忽略 HTML 注释，模板里的说明不会变成卡片",
+                "云端仓库的针灸卡组更新为仅保留耳穴章节，元数据同步更新",
+            ),
+        ),
+        ChangelogEntry(
             version = "1.8.0",
             date = "2026-10-28",
             changes = listOf(

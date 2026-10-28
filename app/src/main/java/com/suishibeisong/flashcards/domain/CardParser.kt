@@ -21,7 +21,9 @@ object CardParser {
     }
 
     fun normalize(text: String?): String =
-        (text ?: "").removePrefix("\uFEFF").replace("\r\n", "\n").replace("\r", "\n").replace("\u0000", "")
+        (text ?: "").removePrefix("\uFEFF").replace("\r\n", "\n").replace("\r", "\n")
+            .replace("\u0000", "")
+            .replace(Regex("<!--[\\s\\S]*?-->"), "")
 
     fun stripFrontMatter(text: String): Pair<String, String> {
         val m = Regex("^---\\n([\\s\\S]*?)\\n---[ \\t]*(?:\\n|$)").find(text) ?: return text to ""
