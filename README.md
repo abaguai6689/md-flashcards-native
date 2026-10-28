@@ -7,7 +7,7 @@
 **纯本地 · 无账号 · 无服务器 · 无广告**。数据只保存在手机应用私有目录，备份由你自己导出。
 
 - 仓库：https://github.com/abaguai6689/suishibeisong
-- 最新版本：**v1.7.1**
+- 最新版本：**v1.8.0**
 - 详细架构与实现说明：[README-DETAILED.md](README-DETAILED.md)
 
 ## 功能
@@ -21,6 +21,7 @@
 - 代码块中的 `##`、`Q:` 不会被误判；YAML frontmatter 自动跳过。
 - 卡片 id 由「标题 + 题面 + 答案」内容哈希生成，重新导入同一篇笔记会继承已掌握进度。
 - **导入图片**：选择图片后按文件名匹配 Markdown 引用，图片复制到应用私有目录，卡片内直接渲染；图片不参与 JSON 备份。
+- **云端导入**：点击导入后选择「从云端导入」，读取 [suishibeisong-cloud](https://github.com/abaguai6689/suishibeisong-cloud) 的公共卡组，显示文件大小、上传时间、上传人、说明。
 - **保存示例**：导入页可一键把示例 Markdown 写入系统 `Download` 目录，方便用 AI 改写后重新导入。
 
 ### 学习

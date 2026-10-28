@@ -236,6 +236,19 @@ class FlashcardRepository(private val context: Context) {
         }
     }
 
+    /** Imports an in-memory cloud file (Markdown or ZIP). */
+    suspend fun importBytes(
+        name: String,
+        bytes: ByteArray,
+        options: ParseOptions = ParseOptions(),
+    ): ImportSummary = withContext(Dispatchers.Default) {
+        if (name.endsWith(".zip", true) || looksLikeZip(bytes)) {
+            importZip(name, bytes, options, true)
+        } else {
+            importMarkdown(name, decodeText(bytes), options, true)
+        }
+    }
+
     private suspend fun importZip(
         name: String,
         bytes: ByteArray,

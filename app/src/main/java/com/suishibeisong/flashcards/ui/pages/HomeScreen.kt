@@ -39,6 +39,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Edit
@@ -122,6 +123,8 @@ fun HomeScreen(
     val state by vm.uiState.collectAsStateWithLifecycle()
     var searching by remember { mutableStateOf(false) }
     var showImport by remember { mutableStateOf(false) }
+    var showCloudImport by remember { mutableStateOf(false) }
+    var showImportChoice by remember { mutableStateOf(false) }
     var sortMenu by remember { mutableStateOf(false) }
     var renameDeck by remember { mutableStateOf<Deck?>(null) }
     var renameText by remember { mutableStateOf("") }
@@ -142,7 +145,7 @@ fun HomeScreen(
                     IconButton(onClick = { searching = !searching }) {
                         Icon(if (searching) Icons.Outlined.Close else Icons.Outlined.Search, contentDescription = s.searchDecks)
                     }
-                    IconButton(onClick = { showImport = true }) {
+                    IconButton(onClick = { showImportChoice = true }) {
                         Icon(Icons.Outlined.Add, contentDescription = s.importButton)
                     }
                 },
@@ -151,7 +154,7 @@ fun HomeScreen(
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = { showImport = true },
+                onClick = { showImportChoice = true },
                 icon = { Icon(Icons.Outlined.Add, contentDescription = null) },
                 text = { Text(s.importButton) },
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -255,7 +258,7 @@ fun HomeScreen(
                         body = if (state.query.isBlank()) s.emptyBody else s.searchDecks,
                         icon = Icons.Outlined.Description,
                         action = if (state.query.isBlank()) {
-                            { Button(onClick = { showImport = true }) { Text(s.importButton) } }
+                            { Button(onClick = { showImportChoice = true }) { Text(s.importButton) } }
                         } else null,
                     )
                 }
@@ -280,6 +283,14 @@ fun HomeScreen(
     }
 
     val scope = rememberCoroutineScope()
+    if (showImportChoice) {
+        ImportChoiceDialog(
+            onLocal = { showImportChoice = false; showImport = true },
+            onCloud = { showImportChoice = false; showCloudImport = true },
+            onDismiss = { showImportChoice = false },
+        )
+    }
+
     if (showImport) {
         ImportSheet(
             vm = vm,
@@ -288,6 +299,22 @@ fun HomeScreen(
                 showImport = false
                 snackbar.currentSnackbarData?.dismiss()
                 scope.launch { snackbar.showSnackbar(summary.messages.firstOrNull() ?: s.imported) }
+            },
+        )
+    }
+
+    if (showCloudImport) {
+        CloudImportSheet(
+            vm = vm,
+            onDismiss = { showCloudImport = false },
+            onDone = { summary ->
+                showCloudImport = false
+                snackbar.currentSnackbarData?.dismiss()
+                scope.launch { snackbar.showSnackbar(summary.messages.firstOrNull() ?: s.imported) }
+            },
+            onError = { message ->
+                snackbar.currentSnackbarData?.dismiss()
+                scope.launch { snackbar.showSnackbar(message) }
             },
         )
     }
@@ -460,6 +487,52 @@ private fun DeckCard(
             )
         }
     }
+    }
+}
+
+@Composable
+private fun ImportChoiceDialog(
+    onLocal: () -> Unit,
+    onCloud: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val s = LocalStrings.current
+    OriginAlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(s.importTitle) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                ImportChoiceRow(Icons.Outlined.UploadFile, s.importFromLocal, s.importFromLocalDesc, onLocal)
+                ImportChoiceRow(Icons.Outlined.CloudDownload, s.importFromCloud, s.importFromCloudDesc, onCloud)
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(s.cancel) } },
+    )
+}
+
+@Composable
+private fun ImportChoiceRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+) {
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+    ) {
+        Row(
+            Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.padding(start = 12.dp))
+            Column {
+                Text(title, fontWeight = FontWeight.SemiBold)
+                Text(subtitle, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
     }
 }
 

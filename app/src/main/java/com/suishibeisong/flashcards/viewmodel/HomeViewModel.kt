@@ -104,6 +104,9 @@ class HomeViewModel(private val repo: FlashcardRepository) : ViewModel() {
     suspend fun importText(name: String, text: String, options: ParseOptions, imageRenames: Map<String, String> = emptyMap()): ImportSummary =
         repo.importMarkdown(name, text, options, imageRenames = imageRenames)
 
+    suspend fun importCloud(name: String, bytes: ByteArray): ImportSummary =
+        repo.importBytes(name, bytes, ParseOptions())
+
     suspend fun importImages(uris: List<Uri>) = repo.importImages(uris)
 
     fun error(): StateFlow<String?> = repo.lastError

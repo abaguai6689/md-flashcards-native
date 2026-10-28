@@ -387,7 +387,21 @@ data class AppState(
 
 ---
 
-## 16. 检查更新与远程更新日志
+## 16. 云端卡组导入
+
+- 云端仓库：`https://github.com/abaguai6689/suishibeisong-cloud`
+- 只扫描仓库 `decks/` 下的 `.md/.markdown/.txt/.zip`；
+- 每个卡组必须有同目录的 `<文件名>.meta.json`：
+  - `file`：文件名
+  - `size`：字节数
+  - `uploadedAt`：ISO 8601 时间
+  - `uploader`：上传人
+  - `description`：说明
+- App 通过 GitHub tree API 列目录，通过 `raw.githubusercontent.com` 下载卡组和元数据；
+- 云端导入使用自动拆卡模式；有图片时建议上传 ZIP；
+- 上传格式和示例见云端仓库 README。
+
+## 17. 检查更新与远程更新日志
 
 - 软件内「关于 → 更新日志」读取 `data/Changelog.kt`，随 APK 打包，保持完整历史，不联网。
 - 启动检查更新读取 GitHub `releases/latest`：
@@ -398,7 +412,7 @@ data class AppState(
 - 「立即更新」直接打开 Release 中最新 `.apk` 资产的 `browser_download_url`；没有 APK 资产时才回退 Release 页面；
 - 「暂不更新」仅关闭当次弹窗，下次启动仍会检查。
 
-## 17. 预测性返回
+## 18. 预测性返回
 
 - `AndroidManifest.xml` 开启 `android:enableOnBackInvokedCallback="true"`；
 - SharedNav 的 `DefaultBackHandler` 在 Android 13+ 接入系统预测性返回；

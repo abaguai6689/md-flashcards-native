@@ -13,6 +13,16 @@ data class ChangelogEntry(
 object Changelog {
     val entries = listOf(
         ChangelogEntry(
+            version = "1.8.0",
+            date = "2026-10-28",
+            changes = listOf(
+                "导入笔记新增「从本地导入 / 从云端导入」两个入口",
+                "云端导入读取 GitHub 公共卡组仓库 suishibeisong-cloud，显示文件大小、上传时间、上传人、文件说明",
+                "云端卡组按同目录的 <文件名>.meta.json 读取元数据，支持 md / txt / zip",
+                "新增云端仓库及 README 上传格式说明，并上传按经络分类的针灸卡组",
+            ),
+        ),
+        ChangelogEntry(
             version = "1.7.1",
             date = "2026-10-28",
             changes = listOf(

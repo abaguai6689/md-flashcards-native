@@ -75,6 +75,20 @@ data class Strings(
     val predictiveBackSystemOffDesc: String = "系统开关 enable_back_animation 当前为 0。请在开发者选项中开启「预测性返回动画」，或执行 adb shell settings put global enable_back_animation 1 后重试。",
     val openDeveloperOptions: String = "打开开发者选项",
     val noCardsInCategory: String = "这个分类下还没有卡片",
+    val importFromLocal: String = "从本地导入",
+    val importFromLocalDesc: String = "选择手机里的 .md / .txt / .zip",
+    val importFromCloud: String = "从云端导入",
+    val importFromCloudDesc: String = "浏览 GitHub 公共卡组仓库",
+    val cloudTitle: String = "云端卡组",
+    val cloudLoading: String = "正在读取云端仓库…",
+    val cloudEmpty: String = "云端暂时没有可用卡组",
+    val cloudError: String = "云端读取失败：%s",
+    val cloudRetry: String = "重试",
+    val cloudDownloading: String = "正在下载并导入…",
+    val cloudUploader: String = "上传人",
+    val cloudUploadedAt: String = "上传时间",
+    val cloudSize: String = "大小",
+    val cloudNoDescription: String = "暂无说明",
 )
 
 val ZhHans = Strings(
