@@ -14,6 +14,8 @@ data class CloudDeck(
     val uploadedAt: String,
     val uploader: String,
     val description: String,
+    val id: String,
+    val version: Int,
 )
 
 data class CloudDeckList(
@@ -70,6 +72,8 @@ object CloudDecks {
                     uploadedAt = meta.optString("uploadedAt"),
                     uploader = meta.optString("uploader"),
                     description = meta.optString("description"),
+                    id = meta.optString("id", path),
+                    version = meta.optInt("version", 0),
                 )
             }
             CloudDeckList(decks.sortedByDescending { it.uploadedAt }, skipped)

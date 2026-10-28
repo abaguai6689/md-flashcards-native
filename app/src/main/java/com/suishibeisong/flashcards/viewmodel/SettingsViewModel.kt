@@ -20,7 +20,6 @@ class SettingsViewModel(private val repo: FlashcardRepository) : ViewModel() {
     fun setLang(value: String) = repo.setLang(value)
     fun setReading(fs: String? = null, lh: Int? = null, cw: Int? = null) = repo.setReading(fs, lh, cw)
     fun setCheckUpdateAtStartup(value: Boolean) = repo.setCheckUpdateAtStartup(value)
-    fun setPredictiveBack(value: Boolean) = repo.setEnablePredictiveBack(value)
     fun clearAll() = repo.clearAll()
 
     suspend fun export(output: OutputStream): Result<Int> = repo.exportJson(output)

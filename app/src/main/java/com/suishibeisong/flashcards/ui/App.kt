@@ -18,7 +18,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.TransformOrigin
@@ -30,11 +32,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.suishibeisong.flashcards.data.CloudDeck
+import com.suishibeisong.flashcards.data.CloudDecks
+import com.suishibeisong.flashcards.data.Deck
 import com.suishibeisong.flashcards.data.FlashcardRepository
+import com.suishibeisong.flashcards.domain.ParseOptions
 import com.suishibeisong.flashcards.ui.components.LocalTapOrigin
 import com.suishibeisong.flashcards.ui.components.MarkdownText
 import com.suishibeisong.flashcards.ui.components.OriginAlertDialog
 import com.suishibeisong.flashcards.ui.i18n.LocalStrings
+import com.suishibeisong.flashcards.ui.i18n.fmt
 import com.suishibeisong.flashcards.ui.i18n.stringsFor
 import com.suishibeisong.flashcards.ui.theme.MdFlashcardsTheme
 import com.suishibeisong.flashcards.ui.theme.ReadingStyle
@@ -42,6 +49,7 @@ import com.suishibeisong.flashcards.viewmodel.UpdateStatus
 import com.suishibeisong.flashcards.viewmodel.UpdateViewModel
 import com.xah.navigation.component.SharedNavHost
 import com.xah.navigation.component.rememberNavController
+import kotlinx.coroutines.launch
 
 @Composable
 fun MdFlashcardsApp() {
@@ -83,10 +91,22 @@ private fun AppContent(repo: FlashcardRepository) {
     val update by updateVm.update.collectAsStateWithLifecycle()
     var rootSize by remember { mutableStateOf(IntSize.Zero) }
     val tapOrigin = remember { mutableStateOf(TransformOrigin.Center) }
+    val scope = rememberCoroutineScope()
+    var cloudUpdate by remember { mutableStateOf<CloudUpdate?>(null) }
+    var cloudUpdating by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { updateVm.checkAtStartup() }
-    LaunchedEffect(appState.settings.enablePredictiveBack) {
-        nav.enablePredictiveBack = appState.settings.enablePredictiveBack
+    LaunchedEffect(Unit) {
+        nav.enablePredictiveBack = false
+    }
+    LaunchedEffect(Unit) {
+        if (appState.decks.none { it.cloudId.isNotBlank() }) return@LaunchedEffect
+        val remote = CloudDecks.list().getOrNull() ?: return@LaunchedEffect
+        val outdated = appState.decks.mapNotNull { deck ->
+            val latest = remote.decks.find { it.id == deck.cloudId && it.version > deck.cloudVersion }
+            if (latest != null) CloudUpdate(deck, latest) else null
+        }
+        cloudUpdate = outdated.firstOrNull()
     }
 
     Box(
@@ -145,6 +165,59 @@ private fun AppContent(repo: FlashcardRepository) {
                 )
             }
 
+            cloudUpdate?.let { pending ->
+                OriginAlertDialog(
+                    onDismissRequest = { if (!cloudUpdating) cloudUpdate = null },
+                    title = { Text(s.cloudUpdateTitle) },
+                    text = {
+                        Text(
+                            s.cloudUpdateText.fmt(
+                                pending.deck.name,
+                                pending.deck.cloudVersion,
+                                pending.cloud.version,
+                            ),
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(
+                            enabled = !cloudUpdating,
+                            onClick = {
+                                if (cloudUpdating) return@TextButton
+                                cloudUpdating = true
+                                scope.launch {
+                                    CloudDecks.download(pending.cloud.path)
+                                        .onSuccess { bytes ->
+                                            runCatching {
+                                                repo.importBytes(
+                                                    pending.cloud.name,
+                                                    bytes,
+                                                    ParseOptions(),
+                                                    cloud = pending.cloud,
+                                                    replaceDeckId = pending.deck.id,
+                                                )
+                                            }.onSuccess {
+                                                snackbar.showSnackbar(s.cloudUpdateDone)
+                                            }.onFailure {
+                                                snackbar.showSnackbar(s.cloudUpdateFailed.fmt(it.message ?: "error"))
+                                            }
+                                        }
+                                        .onFailure {
+                                            snackbar.showSnackbar(s.cloudUpdateFailed.fmt(it.message ?: "error"))
+                                        }
+                                    cloudUpdating = false
+                                    cloudUpdate = null
+                                }
+                            },
+                        ) { Text(if (cloudUpdating) s.cloudUpdating else s.updateNowShort) }
+                    },
+                    dismissButton = {
+                        TextButton(enabled = !cloudUpdating, onClick = { cloudUpdate = null }) {
+                            Text(s.laterShort)
+                        }
+                    },
+                )
+            }
+
             SharedNavHost(
                 navController = nav,
                 modifier = Modifier.fillMaxSize(),
@@ -152,3 +225,6 @@ private fun AppContent(repo: FlashcardRepository) {
         }
     }
 }
+
+
+private data class CloudUpdate(val deck: Deck, val cloud: CloudDeck)

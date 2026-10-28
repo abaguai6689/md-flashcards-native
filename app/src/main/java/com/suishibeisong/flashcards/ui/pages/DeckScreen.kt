@@ -36,6 +36,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -97,12 +98,12 @@ fun DeckScreen(
     var renameText by remember { mutableStateOf("") }
     var deleteOpen by remember { mutableStateOf(false) }
     var resetOpen by remember { mutableStateOf(false) }
-    var count by remember { mutableIntStateOf(0) }
-    var weak by remember { mutableStateOf(false) }
-    var chapter by remember { mutableStateOf("") }
     var chapterMenu by remember { mutableStateOf(false) }
-    var statusFilter by remember { mutableStateOf("all") }
     var statusMenu by remember { mutableStateOf(false) }
+    val count = vm.selectedCount
+    val weak = vm.weakOnly
+    val chapter = vm.selectedChapter
+    val statusFilter = vm.selectedStatus
 
     val deck = ui.deck
     val chapterCards = remember(deck, ui.stats, chapter) {
@@ -196,15 +197,64 @@ fun DeckScreen(
                 QuickAction(Icons.Outlined.ImportContacts, s.deckBrowse, browseKey(deckId), Modifier.weight(1f), onBrowse)
             }
 
+            if (deck.cloudId.isNotBlank() || deck.cloudFileName.isNotBlank()) {
+                Spacer(Modifier.height(18.dp))
+                SectionHeader(s.fileDetails)
+                Spacer(Modifier.height(8.dp))
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text(
+                            s.fileDescription,
+                            fontSize = 10.5.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            deck.cloudDescription.ifBlank { s.cloudNoDescription },
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(top = 3.dp, bottom = 10.dp),
+                        )
+                        HorizontalDivider()
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "${s.fileUploader}: ${deck.cloudUploader.ifBlank { "-" }}",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            "${s.fileUploadedAt}: ${deck.cloudUploadedAt.ifBlank { "-" }}",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 3.dp),
+                        )
+                        Text(
+                            "${s.fileSize}: ${formatFileSize(deck.cloudSize)}",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 3.dp),
+                        )
+                        Text(
+                            "${s.fileVersion}: v${deck.cloudVersion}  ·  ${s.fileId}: ${deck.cloudId}",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 3.dp),
+                        )
+                    }
+                }
+            }
+
             Spacer(Modifier.height(24.dp))
             SectionHeader(s.reviewSetup)
             Spacer(Modifier.height(10.dp))
             Text(s.count, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(6.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = count == 20, onClick = { count = if (count == 20) 0 else 20 }, label = { Text(s.count20) })
-                FilterChip(selected = count == 50, onClick = { count = if (count == 50) 0 else 50 }, label = { Text(s.count50) })
-                FilterChip(selected = count == 0, onClick = { count = 0 }, label = { Text(s.countAll) })
+                FilterChip(selected = count == 20, onClick = { vm.selectCount(if (count == 20) 0 else 20) }, label = { Text(s.count20) })
+                FilterChip(selected = count == 50, onClick = { vm.selectCount(if (count == 50) 0 else 50) }, label = { Text(s.count50) })
+                FilterChip(selected = count == 0, onClick = { vm.selectCount(0) }, label = { Text(s.countAll) })
             }
 
             Spacer(Modifier.height(10.dp))
@@ -218,7 +268,7 @@ fun DeckScreen(
                         Text(s.weakOnly, fontWeight = FontWeight.Medium)
                         Text(s.weakDesc, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Switch(checked = weak, onCheckedChange = { weak = it })
+                    Switch(checked = weak, onCheckedChange = { vm.updateWeakOnly(it) })
                 }
             }
 
@@ -229,9 +279,9 @@ fun DeckScreen(
                     Text("▾")
                 }
                 DropdownMenu(expanded = chapterMenu, onDismissRequest = { chapterMenu = false }) {
-                    DropdownMenuItem(text = { Text(s.all) }, onClick = { chapter = ""; chapterMenu = false })
+                    DropdownMenuItem(text = { Text(s.all) }, onClick = { vm.selectChapter(""); chapterMenu = false })
                     ui.chapters.forEach { ch ->
-                        DropdownMenuItem(text = { Text(ch, maxLines = 1) }, onClick = { chapter = ch; chapterMenu = false })
+                        DropdownMenuItem(text = { Text(ch, maxLines = 1) }, onClick = { vm.selectChapter(ch); chapterMenu = false })
                     }
                 }
             }
@@ -255,7 +305,7 @@ fun DeckScreen(
                         "new" to s.stateNew,
                         "marked" to s.stateMarked,
                     ).forEach { (key, label) ->
-                        DropdownMenuItem(text = { Text(label) }, onClick = { statusFilter = key; statusMenu = false })
+                        DropdownMenuItem(text = { Text(label) }, onClick = { vm.selectStatus(key); statusMenu = false })
                     }
                 }
             }
@@ -315,6 +365,14 @@ fun DeckScreen(
             onDismiss = { resetOpen = false },
         )
     }
+}
+
+private fun formatFileSize(bytes: Long): String {
+    if (bytes <= 0) return "-"
+    if (bytes < 1024) return "$bytes B"
+    val kb = bytes / 1024.0
+    return if (kb < 1024) String.format(java.util.Locale.US, "%.1f KB", kb)
+    else String.format(java.util.Locale.US, "%.1f MB", kb / 1024.0)
 }
 
 @Composable

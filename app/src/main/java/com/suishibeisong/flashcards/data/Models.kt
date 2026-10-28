@@ -31,6 +31,13 @@ data class Deck(
     val tags: List<String> = emptyList(),
     val source: String = "",
     val bundled: Boolean = false,
+    val cloudId: String = "",
+    val cloudVersion: Int = 0,
+    val cloudDescription: String = "",
+    val cloudUploader: String = "",
+    val cloudUploadedAt: String = "",
+    val cloudSize: Long = 0L,
+    val cloudFileName: String = "",
     val cards: List<Card> = emptyList(),
 )
 
@@ -63,7 +70,6 @@ data class Settings(
     val lang: String = "zh",
     val statsView: String = "heat",
     val checkUpdateAtStartup: Boolean = true,
-    val enablePredictiveBack: Boolean = true,
     val reading: ReadingSettings = ReadingSettings(),
     val tagFilter: String = "",
     val deckSort: String = "recent",

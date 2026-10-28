@@ -284,7 +284,7 @@ data class AppState(
 | Browse | 搜索、卡片列表、编辑对话框、删卡、重置单卡 |
 | Stats | 今日/累计/连续、26 周热力图、7 天条形图、按日点击 |
 | Settings | 通用 / 阅读 / 数据入口；关于卡（版本、仓库、检查更新、启动检查、更新日志） |
-| General | 主题、语言、预测性返回开关 |
+| General | 主题、语言 |
 | Reading | 字号、行距、卡片宽度 |
 | Data | 导出备份、导入备份、清空数据 |
 
@@ -412,18 +412,10 @@ data class AppState(
 - 「立即更新」直接打开 Release 中最新 `.apk` 资产的 `browser_download_url`；没有 APK 资产时才回退 Release 页面；
 - 「暂不更新」仅关闭当次弹窗，下次启动仍会检查。
 
-## 18. 预测性返回
-
-- `AndroidManifest.xml` 开启 `android:enableOnBackInvokedCallback="true"`；
-- SharedNav 的 `DefaultBackHandler` 在 Android 13+ 接入系统预测性返回；
-- 设置 → 通用中的「预测性返回」关闭时，`NavigationController.enablePredictiveBack = false`，退回普通返回；
-- 系统开关 `Settings.Global.ENABLE_BACK_ANIMATION`（`enable_back_animation`）必须为 1，否则任何 App 都不会出现返回预览。通用页会检测该值并提示，App 无权修改系统设置；
-- 手动开启：开发者选项 → 预测性返回动画，或 `adb shell settings put global enable_back_animation 1`。
-
 ## 18. 页面与弹窗动效
 
 - 页面导航已完全切换到 SharedNav：
-  - `SharedNavHost` 管理返回栈、共享容器、背景/前景效果与预测性返回；
+  - `SharedNavHost` 管理返回栈、共享容器与背景/前景效果；
   - 触发卡片/按钮用 `NavTrigger`（内部 `SharedContainer`）包裹，key 与目标 `Destination.key` 一致；
   - 页面从触发元素的真实位置展开，返回时缩回同一元素；不再使用 `NavHost` 的 `scaleIn`/`fadeIn` 交叉渐变，因此不会闪烁；
   - 主要源容器：首页笔记卡/继续学习、笔记详情四个分类数字、学习/速记/浏览按钮、设置三个入口。

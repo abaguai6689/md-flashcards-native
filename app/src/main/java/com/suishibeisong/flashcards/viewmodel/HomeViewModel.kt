@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.suishibeisong.flashcards.data.AppState
 import com.suishibeisong.flashcards.data.CardStat
 import com.suishibeisong.flashcards.data.Deck
+import com.suishibeisong.flashcards.data.CloudDeck
 import com.suishibeisong.flashcards.data.FlashcardRepository
 import com.suishibeisong.flashcards.data.ImportSummary
 import com.suishibeisong.flashcards.data.ProgressRules
@@ -104,8 +105,8 @@ class HomeViewModel(private val repo: FlashcardRepository) : ViewModel() {
     suspend fun importText(name: String, text: String, options: ParseOptions, imageRenames: Map<String, String> = emptyMap()): ImportSummary =
         repo.importMarkdown(name, text, options, imageRenames = imageRenames)
 
-    suspend fun importCloud(name: String, bytes: ByteArray): ImportSummary =
-        repo.importBytes(name, bytes, ParseOptions())
+    suspend fun importCloud(deck: CloudDeck, bytes: ByteArray): ImportSummary =
+        repo.importBytes(deck.name, bytes, ParseOptions(), cloud = deck)
 
     suspend fun importImages(uris: List<Uri>) = repo.importImages(uris)
 

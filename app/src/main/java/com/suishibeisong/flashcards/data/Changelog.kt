@@ -13,6 +13,19 @@ data class ChangelogEntry(
 object Changelog {
     val entries = listOf(
         ChangelogEntry(
+            version = "1.9.0",
+            date = "2026-10-28",
+            changes = listOf(
+                "修复更换章节后仍进入上次学习章节的问题：每次开始学习使用独立的复习 ViewModel",
+                "笔记详情保留章节、状态、数量、薄弱卡选择，退出学习返回后不重置",
+                "右滑记住时卡片边框改为绿色，左滑仍为红色",
+                "移除预测性返回功能、设置开关和相关代码",
+                "云端卡组元数据新增 id / version，启动时自动核对已下载卡组的版本并提示更新",
+                "云端导入的笔记在详情页显示文件说明、上传人、时间、大小、版本和文件 ID",
+                "修复云端加载/下载转圈不居中、云端文件更名为「穴位定位」",
+            ),
+        ),
+        ChangelogEntry(
             version = "1.8.1",
             date = "2026-10-28",
             changes = listOf(

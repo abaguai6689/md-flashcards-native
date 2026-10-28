@@ -170,6 +170,8 @@ class FlashcardRepository(private val context: Context) {
         options: ParseOptions = ParseOptions(),
         allowReplace: Boolean = true,
         imageRenames: Map<String, String> = emptyMap(),
+        cloud: CloudDeck? = null,
+        replaceDeckId: String? = null,
     ): ImportSummary = withContext(Dispatchers.Default) {
         val rewritten = ImageRefs.rewrite(text, imageRenames)
         if (rewritten.trim().length < 10) return@withContext ImportSummary(skipped = 1, messages = listOf("$name 内容太短"))
@@ -181,7 +183,7 @@ class FlashcardRepository(private val context: Context) {
             parsedCardToCard(p).copy(tags = parseInlineTags(p.answer + " " + p.question))
         }
         val deck = Deck(
-            id = parsed.id,
+            id = replaceDeckId ?: parsed.id,
             name = parsed.name,
             title = parsed.title,
             createdAt = System.currentTimeMillis(),
@@ -189,10 +191,21 @@ class FlashcardRepository(private val context: Context) {
             qstyle = parsed.qstyle,
             raw = rewritten,
             tags = tags,
+            cloudId = cloud?.id.orEmpty(),
+            cloudVersion = cloud?.version ?: 0,
+            cloudDescription = cloud?.description.orEmpty(),
+            cloudUploader = cloud?.uploader.orEmpty(),
+            cloudUploadedAt = cloud?.uploadedAt.orEmpty(),
+            cloudSize = cloud?.size ?: 0L,
+            cloudFileName = cloud?.name.orEmpty(),
             cards = cards,
         )
 
-        val exists = _state.value.decks.any { it.name == deck.name }
+        val exists = if (replaceDeckId != null) {
+            _state.value.decks.any { it.id == replaceDeckId }
+        } else {
+            _state.value.decks.any { it.name == deck.name }
+        }
         if (exists && !allowReplace) {
             return@withContext ImportSummary(
                 skipped = 1,
@@ -201,7 +214,11 @@ class FlashcardRepository(private val context: Context) {
         }
 
         update { s ->
-            val existingIndex = s.decks.indexOfFirst { it.name == deck.name }
+            val existingIndex = if (replaceDeckId != null) {
+                s.decks.indexOfFirst { it.id == replaceDeckId }
+            } else {
+                s.decks.indexOfFirst { it.name == deck.name }
+            }
             val decks = s.decks.toMutableList()
             if (existingIndex >= 0) decks[existingIndex] = deck else decks.add(deck)
             s.copy(
@@ -241,11 +258,13 @@ class FlashcardRepository(private val context: Context) {
         name: String,
         bytes: ByteArray,
         options: ParseOptions = ParseOptions(),
+        cloud: CloudDeck? = null,
+        replaceDeckId: String? = null,
     ): ImportSummary = withContext(Dispatchers.Default) {
         if (name.endsWith(".zip", true) || looksLikeZip(bytes)) {
-            importZip(name, bytes, options, true)
+            importZip(name, bytes, options, true, cloud = cloud)
         } else {
-            importMarkdown(name, decodeText(bytes), options, true)
+            importMarkdown(name, decodeText(bytes), options, true, cloud = cloud, replaceDeckId = replaceDeckId)
         }
     }
 
@@ -255,6 +274,7 @@ class FlashcardRepository(private val context: Context) {
         options: ParseOptions,
         allowReplace: Boolean,
         externalRenames: Map<String, String> = emptyMap(),
+        cloud: CloudDeck? = null,
     ): ImportSummary = withContext(Dispatchers.Default) {
         val texts = ArrayList<Pair<String, String>>()
         val renames = externalRenames.toMutableMap()
@@ -287,7 +307,7 @@ class FlashcardRepository(private val context: Context) {
         }
         val aggregate = ArrayList<ImportSummary>()
         texts.forEach { (fileName, text) ->
-            aggregate += importMarkdown(fileName, text, options, allowReplace, renames)
+            aggregate += importMarkdown(fileName, text, options, allowReplace, renames, cloud = cloud)
         }
         ImportSummary(
             decks = aggregate.sumOf { it.decks },
@@ -417,8 +437,6 @@ class FlashcardRepository(private val context: Context) {
     fun setStatsView(view: String) = update { it.copy(settings = it.settings.copy(statsView = view)) }
     fun setCheckUpdateAtStartup(value: Boolean) =
         update { it.copy(settings = it.settings.copy(checkUpdateAtStartup = value)) }
-    fun setEnablePredictiveBack(value: Boolean) =
-        update { it.copy(settings = it.settings.copy(enablePredictiveBack = value)) }
     fun setReading(fs: String? = null, lh: Int? = null, cw: Int? = null) = update { s ->
         s.copy(settings = s.settings.copy(reading = s.settings.reading.copy(
             fs = fs ?: s.settings.reading.fs,

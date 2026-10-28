@@ -236,8 +236,8 @@ private fun FlipSwipeCard(
     val offset = remember(card.id) { Animatable(0f) }
     var width by remember { mutableFloatStateOf(0f) }
     val swipeColor = when {
-        offset.value > 24f -> MaterialTheme.colorScheme.primary
-        offset.value < -24f -> MaterialTheme.colorScheme.error
+        offset.value > 24f -> Color(0xFF2E9E5B)
+        offset.value < -24f -> Color(0xFFD64545)
         else -> Color.Transparent
     }
 

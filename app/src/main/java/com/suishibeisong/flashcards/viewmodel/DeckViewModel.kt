@@ -1,5 +1,9 @@
 package com.suishibeisong.flashcards.viewmodel
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.suishibeisong.flashcards.data.CardStat
@@ -22,6 +26,20 @@ data class DeckUiState(
 )
 
 class DeckViewModel(private val repo: FlashcardRepository, private val deckId: String) : ViewModel() {
+    var selectedChapter by mutableStateOf("")
+        private set
+    var selectedStatus by mutableStateOf("all")
+        private set
+    var selectedCount by mutableIntStateOf(0)
+        private set
+    var weakOnly by mutableStateOf(false)
+        private set
+
+    fun selectChapter(value: String) { selectedChapter = value }
+    fun selectStatus(value: String) { selectedStatus = value }
+    fun selectCount(value: Int) { selectedCount = value }
+    fun updateWeakOnly(value: Boolean) { weakOnly = value }
+
     val ui: StateFlow<DeckUiState> = repo.state.map { state ->
         val deck = state.decks.find { it.id == deckId }
         val chapters = deck?.cards?.map { ProgressRules.chapterOf(it) }?.distinct()?.sorted().orEmpty()

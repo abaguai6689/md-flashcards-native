@@ -66,7 +66,10 @@ object RootDestination : Destination() {
                             onOpenDeck = { nav.push(DeckDestination(it)) },
                             onReview = {
                                 val deckId = vm.session()?.deckIds?.firstOrNull()
-                                if (deckId != null) nav.push(ReviewDestination(deckId, resume = true))
+                                if (deckId != null) {
+                                    val token = deps.repo.currentState.reviewSession?.savedAt ?: System.currentTimeMillis()
+                                    nav.push(ReviewDestination(deckId, resume = true, sessionToken = token))
+                                }
                             },
                             onQuick = { nav.push(QuickDestination(it)) },
                             onBrowse = { nav.push(BrowseDestination(it)) },
@@ -111,7 +114,10 @@ data class DeckDestination(val deckId: String) : Destination() {
             deckId = deckId,
             snackbar = deps.snackbar,
             onBack = { nav.pop() },
-            onStartReview = { nav.push(ReviewDestination(deckId)) },
+            onStartReview = {
+                val token = deps.repo.currentState.reviewSession?.savedAt ?: System.currentTimeMillis()
+                nav.push(ReviewDestination(deckId, sessionToken = token))
+            },
             onQuick = { nav.push(QuickDestination(deckId)) },
             onBrowse = { nav.push(BrowseDestination(deckId)) },
             onOpenCategory = { category, selectedChapter ->
@@ -137,14 +143,18 @@ data class DeckCardsDestination(
     }
 }
 
-data class ReviewDestination(val deckId: String, val resume: Boolean = false) : Destination() {
+data class ReviewDestination(
+    val deckId: String,
+    val resume: Boolean = false,
+    val sessionToken: Long = 0L,
+) : Destination() {
     override val key = reviewKey(deckId, resume)
 
     @Composable
     override fun Content() {
         val deps = LocalAppDeps.current
         val nav = LocalNavController.current
-        val vm = appViewModel("review-$deckId") { ReviewViewModel(deps.repo) }
+        val vm = appViewModel("review-$deckId-$sessionToken") { ReviewViewModel(deps.repo) }
         ReviewScreen(vm = vm, deckId = deckId, onExit = { nav.pop() })
     }
 }
