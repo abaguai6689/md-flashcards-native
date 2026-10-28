@@ -78,7 +78,7 @@ data class Strings(
 )
 
 val ZhHans = Strings(
-    code = "zh", appName = "闪卡背诵", tabHome = "首页", tabStats = "统计", tabSettings = "设置",
+    code = "zh", appName = "背诵小猪手", tabHome = "首页", tabStats = "统计", tabSettings = "设置",
     homeTitle = "闪记卡", homeSubtitle = "长笔记 → 卡片 → 随机抽背",
     statDue = "待学习", statKnown = "已掌握", statToday = "今日学习",
     resumeTitle = "继续上次学习", resumeLeft = "还剩 %d 张", searchDecks = "搜索笔记",
@@ -126,7 +126,7 @@ val ZhHans = Strings(
 )
 
 val ZhHant = ZhHans.copy(
-    code = "zh-Hant", appName = "閃卡背誦", tabHome = "首頁", tabStats = "統計", tabSettings = "設定",
+    code = "zh-Hant", appName = "背誦小豬手", tabHome = "首頁", tabStats = "統計", tabSettings = "設定",
     homeTitle = "閃記卡", homeSubtitle = "長筆記 → 卡片 → 隨機抽背",
     statDue = "待學習", statKnown = "已掌握", statToday = "今日學習",
     resumeTitle = "繼續上次學習", resumeLeft = "還剩 %d 張", searchDecks = "搜尋筆記",
@@ -186,7 +186,7 @@ val ZhHant = ZhHans.copy(
 )
 
 val En = ZhHans.copy(
-    code = "en", appName = "Flashcards Recite", tabHome = "Home", tabStats = "Stats", tabSettings = "Settings",
+    code = "en", appName = "Piggy Recite", tabHome = "Home", tabStats = "Stats", tabSettings = "Settings",
     homeTitle = "Flashcards", homeSubtitle = "Long notes → cards → active recall",
     statDue = "Due", statKnown = "Known", statToday = "Today",
     resumeTitle = "Resume last review", resumeLeft = "%d left", searchDecks = "Search notes",

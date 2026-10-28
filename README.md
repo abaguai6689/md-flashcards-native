@@ -1,4 +1,4 @@
-# 闪卡背诵 · Flashcards Recite
+# 背诵小猪手 · Piggy Recite
 
 [![Android CI](https://github.com/abaguai6689/suishibeisong/actions/workflows/android.yml/badge.svg)](https://github.com/abaguai6689/suishibeisong/actions/workflows/android.yml)
 
@@ -7,7 +7,7 @@
 **纯本地 · 无账号 · 无服务器 · 无广告**。数据只保存在手机应用私有目录，备份由你自己导出。
 
 - 仓库：https://github.com/abaguai6689/suishibeisong
-- 最新版本：**v1.7.0**
+- 最新版本：**v1.7.1**
 - 详细架构与实现说明：[README-DETAILED.md](README-DETAILED.md)
 
 ## 功能

@@ -63,6 +63,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.suishibeisong.flashcards.data.ProgressRules
 import com.suishibeisong.flashcards.ui.components.ConfirmDialog
 import com.suishibeisong.flashcards.ui.components.NavTrigger
 import com.suishibeisong.flashcards.ui.components.OriginAlertDialog
@@ -86,7 +87,7 @@ fun DeckScreen(
     onStartReview: () -> Unit,
     onQuick: () -> Unit,
     onBrowse: () -> Unit,
-    onOpenCategory: (String) -> Unit,
+    onOpenCategory: (String, String) -> Unit,
 ) {
     val s = LocalStrings.current
     val ui by vm.ui.collectAsStateWithLifecycle()
@@ -104,6 +105,18 @@ fun DeckScreen(
     var statusMenu by remember { mutableStateOf(false) }
 
     val deck = ui.deck
+    val chapterCards = remember(deck, ui.stats, chapter) {
+        deck?.cards.orEmpty().filter { chapter.isEmpty() || ProgressRules.chapterOf(it) == chapter }
+    }
+    val chapterKnown = remember(chapterCards, ui.stats) {
+        chapterCards.count { ProgressRules.matchesCategory(ui.stats[it.id], "known") }
+    }
+    val chapterNew = remember(chapterCards, ui.stats) {
+        chapterCards.count { ProgressRules.matchesCategory(ui.stats[it.id], "new") }
+    }
+    val chapterMarked = remember(chapterCards, ui.stats) {
+        chapterCards.count { ProgressRules.matchesCategory(ui.stats[it.id], "marked") }
+    }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbar) },
@@ -161,14 +174,14 @@ fun DeckScreen(
                     Text(deck.title.ifBlank { deck.name }, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(8.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Metric(deck.cards.size.toString(), s.cardsShort, deckCardsKey(deckId, "all")) { onOpenCategory("all") }
-                        Metric(ui.known.toString(), s.stateKnown, deckCardsKey(deckId, "known")) { onOpenCategory("known") }
-                        Metric(ui.newCount.toString(), s.stateNew, deckCardsKey(deckId, "new")) { onOpenCategory("new") }
-                        Metric(ui.markedCount.toString(), s.stateMarked, deckCardsKey(deckId, "marked")) { onOpenCategory("marked") }
+                        Metric(chapterCards.size.toString(), s.cardsShort, deckCardsKey(deckId, "all", chapter)) { onOpenCategory("all", chapter) }
+                        Metric(chapterKnown.toString(), s.stateKnown, deckCardsKey(deckId, "known", chapter)) { onOpenCategory("known", chapter) }
+                        Metric(chapterNew.toString(), s.stateNew, deckCardsKey(deckId, "new", chapter)) { onOpenCategory("new", chapter) }
+                        Metric(chapterMarked.toString(), s.stateMarked, deckCardsKey(deckId, "marked", chapter)) { onOpenCategory("marked", chapter) }
                     }
                     Spacer(Modifier.height(14.dp))
                     LinearProgressIndicator(
-                        progress = { if (deck.cards.isEmpty()) 0f else ui.known.toFloat() / deck.cards.size },
+                        progress = { if (chapterCards.isEmpty()) 0f else chapterKnown.toFloat() / chapterCards.size },
                         modifier = Modifier.fillMaxWidth().height(6.dp).clip(CircleShape),
                         color = MaterialTheme.colorScheme.primary,
                         trackColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -341,11 +354,12 @@ private fun QuickAction(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
+    val innerShape = if (sharedKey == null) RoundedCornerShape(18.dp) else RectangleShape
     val content: @Composable () -> Unit = {
     Surface(
-        shape = RectangleShape,
+        shape = innerShape,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clip(innerShape).clickable(onClick = onClick),
     ) {
         Column(Modifier.padding(vertical = 14.dp, horizontal = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))

@@ -1,4 +1,4 @@
-# 闪卡背诵 · 框架与实现详解
+# 背诵小猪手 · 框架与实现详解
 
 本文是给维护者看的完整说明：架构、数据模型、拆卡算法、每个页面的实现、图片/备份/更新链路、构建发布与已知取舍。  
 面向使用者的简要说明见 [README.md](README.md)。
@@ -430,7 +430,7 @@ data class AppState(
 ## 20. 签名与覆盖安装
 
 - 固定签名文件：`keystore/md-flashcards.jks`，alias `mdflashcards`；
-- 包名：`com.suishibeisong.flashcards`；应用名：闪卡背诵；仓库：`abaguai6689/suishibeisong`；
+- 包名：`com.suishibeisong.flashcards`；应用名：背诵小猪手；仓库：`abaguai6689/suishibeisong`；
 - debug / release 都使用同一个 `signingConfigs.fixed`，因此后续版本可直接覆盖安装；
 - 可通过环境变量 `MD_KEYSTORE_PASSWORD` / `MD_KEY_ALIAS` / `MD_KEY_PASSWORD` 覆盖默认值；
 - **注意**：该 keystore 随公开仓库分发，只适合个人侧载/内测，不能用于 Google Play 上架；上架请换私有密钥并从 CI Secrets 注入；

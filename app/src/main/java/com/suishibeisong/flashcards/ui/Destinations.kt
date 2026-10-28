@@ -35,7 +35,7 @@ import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.launch
 
 fun deckKey(deckId: String) = "deck_$deckId"
-fun deckCardsKey(deckId: String, category: String) = "deck_cards_${deckId}_$category"
+fun deckCardsKey(deckId: String, category: String, chapter: String = "") = "deck_cards_${deckId}_${category}_${chapter}"
 fun reviewKey(deckId: String, resume: Boolean = false) = "review_${deckId}_$resume"
 fun quickKey(deckId: String) = "quick_$deckId"
 fun browseKey(deckId: String) = "browse_$deckId"
@@ -114,20 +114,26 @@ data class DeckDestination(val deckId: String) : Destination() {
             onStartReview = { nav.push(ReviewDestination(deckId)) },
             onQuick = { nav.push(QuickDestination(deckId)) },
             onBrowse = { nav.push(BrowseDestination(deckId)) },
-            onOpenCategory = { nav.push(DeckCardsDestination(deckId, it)) },
+            onOpenCategory = { category, selectedChapter ->
+                nav.push(DeckCardsDestination(deckId, category, selectedChapter))
+            },
         )
     }
 }
 
-data class DeckCardsDestination(val deckId: String, val category: String) : Destination() {
-    override val key = deckCardsKey(deckId, category)
+data class DeckCardsDestination(
+    val deckId: String,
+    val category: String,
+    val chapter: String = "",
+) : Destination() {
+    override val key = deckCardsKey(deckId, category, chapter)
 
     @Composable
     override fun Content() {
         val deps = LocalAppDeps.current
         val nav = LocalNavController.current
         val vm = appViewModel("deck-cards-$deckId") { DeckViewModel(deps.repo, deckId) }
-        DeckCardsScreen(vm = vm, category = category, onBack = { nav.pop() })
+        DeckCardsScreen(vm = vm, category = category, chapter = chapter, onBack = { nav.pop() })
     }
 }
 

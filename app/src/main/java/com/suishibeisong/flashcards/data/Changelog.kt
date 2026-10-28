@@ -13,6 +13,15 @@ data class ChangelogEntry(
 object Changelog {
     val entries = listOf(
         ChangelogEntry(
+            version = "1.7.1",
+            date = "2026-10-28",
+            changes = listOf(
+                "应用名称改为「背诵小猪手」，启动图标替换为用户提供的图片",
+                "修复随机学习按钮为直角的问题，恢复与相邻按钮一致的圆角",
+                "笔记详情顶部四类数量改为跟随当前章节筛选，不再始终显示全书数量",
+            ),
+        ),
+        ChangelogEntry(
             version = "1.7.0",
             date = "2026-10-27",
             changes = listOf(

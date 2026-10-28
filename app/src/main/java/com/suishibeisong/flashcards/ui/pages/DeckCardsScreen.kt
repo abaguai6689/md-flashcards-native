@@ -56,13 +56,17 @@ import com.suishibeisong.flashcards.viewmodel.DeckViewModel
 fun DeckCardsScreen(
     vm: DeckViewModel,
     category: String,
+    chapter: String = "",
     onBack: () -> Unit,
 ) {
     val s = LocalStrings.current
     val ui by vm.ui.collectAsStateWithLifecycle()
     val deck = ui.deck
-    val cards = remember(deck, ui.stats, category) {
-        deck?.cards.orEmpty().filter { ProgressRules.matchesCategory(ui.stats[it.id], category) }
+    val cards = remember(deck, ui.stats, category, chapter) {
+        deck?.cards.orEmpty().filter { card ->
+            (chapter.isBlank() || ProgressRules.chapterOf(card) == chapter) &&
+                ProgressRules.matchesCategory(ui.stats[card.id], category)
+        }
     }
     val label = when (category) {
         "known" -> s.stateKnown
@@ -80,7 +84,7 @@ fun DeckCardsScreen(
                     Column {
                         Text(label, fontWeight = FontWeight.SemiBold)
                         Text(
-                            "${cards.size} ${s.cardsShort}",
+                            "${chapter.ifBlank { s.all }} · ${cards.size} ${s.cardsShort}",
                             fontSize = 10.5.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
